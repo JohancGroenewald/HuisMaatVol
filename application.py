@@ -23,6 +23,7 @@ try:
     print('{}\n{}'.format(mem_info(), '-' * 69))
     collect()
     run_loop.run()
+    collect()
 except Exception as e:
     import sys
 
