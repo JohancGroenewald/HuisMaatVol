@@ -111,9 +111,11 @@ class RunLoop:
                         if self.messaging.instructions()['action'] == 'on':
                             self.relay.value(relay_on_level)
                             state = 1
-                        if self.messaging.instructions()['action'] == 'off':
+                        elif self.messaging.instructions()['action'] == 'off':
                             self.relay.value(not relay_on_level)
                             state = 0
+                        elif self.messaging.instructions()['action'] == 'exit':
+                            self.exit = True
                     self.messaging.completed()
             elif self.wifi.connecting():
                 self.led.toggle(250)
