@@ -31,11 +31,6 @@ class RunLoop:
         self.device_id = self.wifi.device_id()
         self.messaging = Messaging(self.config, self.device_id)
         # ------------------------------------------------------------------------------------------------------------ #
-        if self.verbose:
-            print('<{} with id {}>'.format(self.config['device']['name'], self.device_id))
-            print(self.led)
-            print(self.wifi)
-            print(self.messaging)
         # Application ready feedback --------------------------------------------------------------------------------- #
         self.led.on(poll=True)
         time.sleep(2)
@@ -44,6 +39,11 @@ class RunLoop:
         if self.wifi.connected():
             self.on_wifi_connected()
         # ------------------------------------------------------------------------------------------------------------ #
+        if self.verbose:
+            print('<{} with id {}>'.format(self.config['device']['name'], self.device_id))
+            print(self.led)
+            print(self.wifi)
+            print(self.messaging)
 
     def on_wifi_connected(self):
         self.led.toggle(500)

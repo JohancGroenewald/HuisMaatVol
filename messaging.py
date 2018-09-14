@@ -12,11 +12,12 @@ class Messaging:
         self.mqtt = None
 
     def __repr__(self):
-        return '<Messaging: {}, {}, {}:{} at {:x}>'.format(
+        return '<Messaging: {}, {}, {}:{}, {} at {:x}>'.format(
             self.device_id,
             'MQTT',
             self.config['mqtt']['ip'],
             self.config['mqtt']['port'],
+            self.mqtt,
             id(self)
         )
 
@@ -32,12 +33,12 @@ class Messaging:
             self.mqtt = MQTTClient(
                 client_id=self.device_id, server=self.config['mqtt']['ip'], port=self.config['mqtt']['port']
             )
-            if self.mqtt.connect():
-                message = {'state': 'connected'}
-                self.publish(message)
-                if subscribe:
-                    self.mqtt.set_callback(self.callback)
-                    self.mqtt.subscribe(self.device_id)
+            self.mqtt.connect()
+            message = {'state': 'connected'}
+            self.publish(message)
+            if subscribe:
+                self.mqtt.set_callback(self.callback)
+                self.mqtt.subscribe(self.device_id)
 
     def publish(self, message):
         message['device_id'] = self.device_id

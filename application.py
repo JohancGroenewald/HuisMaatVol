@@ -14,7 +14,7 @@ from run import RunLoop
 run_loop = RunLoop(CONFIG, verbose=1)
 # noinspection PyBroadException
 try:
-    print('<\n{}\n>'.format(mem_info()))
+    print('{}\n{}\n{}'.format('-' * 69, mem_info(), '-' * 69))
     run_loop.run()
 except Exception as e:
     import sys
