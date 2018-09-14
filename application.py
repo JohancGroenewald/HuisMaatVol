@@ -5,7 +5,7 @@ Update history
 --------------
 20190910.1250: Created
 """
-from micropython import opt_level
+from micropython import opt_level, mem_info
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
 from config import CONFIG
@@ -14,6 +14,7 @@ from run import RunLoop
 run_loop = RunLoop(CONFIG, verbose=1)
 # noinspection PyBroadException
 try:
+    print('<\n{}\n>'.format(mem_info()))
     run_loop.run()
 except Exception as e:
     import sys

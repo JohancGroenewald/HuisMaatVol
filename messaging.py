@@ -20,14 +20,24 @@ class Messaging:
             id(self)
         )
 
-    def connect(self):
+    def poll(self):
+        pass
+
+    @staticmethod
+    def callback(topic, msg):
+        print(topic, msg)
+
+    def connect(self, subscribe=False):
         if self.mqtt is None:
             self.mqtt = MQTTClient(
                 client_id=self.device_id, server=self.config['mqtt']['ip'], port=self.config['mqtt']['port']
             )
-            self.mqtt.connect()
-            message = {'state': 'connected'}
-            self.publish(message)
+            if self.mqtt.connect():
+                message = {'state': 'connected'}
+                self.publish(message)
+                if subscribe:
+                    self.mqtt.set_callback(self.callback)
+                    self.mqtt.subscribe(self.device_id)
 
     def publish(self, message):
         message['device_id'] = self.device_id
