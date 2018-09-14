@@ -6,11 +6,12 @@ from umqtt_robust import MQTTClient
 
 
 class Messaging:
+    msg = None
+
     def __init__(self, config, device_id):
         self.config = config
         self.device_id = device_id
         self.mqtt = None
-        self.msg = None
 
     def __repr__(self):
         return '<Messaging: {}, {}, subscribed:{}, {}:{}, {} at {:x}>'.format(
