@@ -8,6 +8,11 @@ Update history
 from micropython import opt_level, mem_info
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
+print('-' * 69)
+print('{}\n{}'.format(mem_info(), '-' * 69))
+from gc import collect
+collect()
+
 from config import CONFIG
 from run import RunLoop
 

@@ -40,6 +40,7 @@ class Messaging:
             message = {'state': 'connected'}
             self.publish(message)
             if self.config['mqtt']['subscribe']:
+                print('Subscribing...')
                 self.mqtt.set_callback(self.callback)
                 self.mqtt.subscribe(self.device_id)
 
