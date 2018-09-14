@@ -1,10 +1,8 @@
 from sys import modules
 from gc import collect
-from micropython import mem_info
 
 
 def run():
-    print('{}\n{}\n{}'.format('-' * 69, mem_info(), '-' * 69))
     system_modules = [
         # 'flashbdev',
         # 'webrepl',
@@ -34,7 +32,6 @@ def run():
         del modules['unload']
 
     collect()
-    print('{}\n{}\n{}'.format('-' * 69, mem_info(), '-' * 69))
 
 
 run()
