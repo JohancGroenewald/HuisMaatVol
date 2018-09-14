@@ -58,7 +58,8 @@ class RunLoop:
             self.led.poll()
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
-                print(self.messaging.poll())
+                if self.messaging.poll():
+                    print('process msg: {}'.format(self.messaging.msg))
             elif self.wifi.connecting():
                 self.led.toggle(250)
             elif not self.wifi.connected():
