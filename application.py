@@ -9,9 +9,9 @@ from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
 from config import CONFIG
-import run
+from run import RunLoop
 
-run_loop = run.RunLoop(CONFIG, verbose=1)
+run_loop = RunLoop(CONFIG, verbose=1)
 # noinspection PyBroadException
 try:
     run_loop.run()
