@@ -10,6 +10,7 @@ class Messaging:
         self.config = config
         self.device_id = device_id
         self.mqtt = None
+        self.msg = None
 
     def __repr__(self):
         return '<Messaging: {}, {}, {}:{}, {} at {:x}>'.format(
@@ -24,10 +25,12 @@ class Messaging:
     def poll(self):
         if self.mqtt is not None:
             self.mqtt.check_msg()
+            return self.msg is not None
 
     @staticmethod
     def callback(topic, msg):
-        print(topic, msg)
+        Messaging.msg = json.dumps(msg)
+        print(topic, Messaging.msg)
 
     def connect(self):
         if self.mqtt is None:
