@@ -78,28 +78,28 @@ class RunLoop:
             if state == 0 and self.button.pressed() == self.button.SHORT_PRESS:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 0>')
-                self.messaging.publish('<Button: SHORT_PRESS 0>')
+                self.messaging.publish({'state': '<Button: SHORT_PRESS 0>'})
                 self.relay.value(relay_on_level)
                 state = 1
                 self.button.clear()
             elif state == 1 and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 1>')
-                self.messaging.publish('<Button: SHORT_PRESS 1>')
+                self.messaging.publish({'state': '<Button: SHORT_PRESS 1>'})
                 self.relay.value(not relay_on_level)
                 state = 0
                 self.button.clear()
             elif state == 0 and self.button.pressed() == self.button.LONG_PRESS:
                 if self.verbose:
                     print('<Button: LONG_PRESS 0>')
-                self.messaging.publish('<Button: LONG_PRESS 0>')
+                self.messaging.publish({'state': '<Button: LONG_PRESS 0>'})
                 self.led.off()
                 state = 2
                 self.button.clear()
             elif state == 2 and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: LONG_PRESS 2>')
-                self.messaging.publish('<Button: LONG_PRESS 2>')
+                self.messaging.publish({'state': '<Button: LONG_PRESS 2>'})
                 self.led.toggle(500)
                 state = 0
                 self.button.clear()
