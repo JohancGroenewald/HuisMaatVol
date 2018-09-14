@@ -21,6 +21,7 @@ run_loop = RunLoop(CONFIG, verbose=1)
 try:
     print('-' * 69)
     print('{}\n{}'.format(mem_info(), '-' * 69))
+    collect()
     run_loop.run()
 except Exception as e:
     import sys
