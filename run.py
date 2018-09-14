@@ -40,7 +40,7 @@ class RunLoop:
                 self.config['pinout']['button']['on_level']
             )
 
-        self.relay = Pin(CONFIG['pinout']['relay']['pin'], Pin.OUT)
+        self.relay = Pin(self.config['pinout']['relay']['pin'], Pin.OUT)
 
         self.wifi = WiFi(self.config, verbose=self.verbose)
         self.device_id = self.wifi.device_id()
@@ -75,28 +75,28 @@ class RunLoop:
             self.led.poll()
             self.button.poll()
             # -------------------------------------------------------------------------------------------------------- #
-            if state == 0 and self.button.pressed() == Button.SHORT_PRESS:
+            if state == 0 and self.button.pressed() == self.button.SHORT_PRESS:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 0>')
                 self.messaging.publish('<Button: SHORT_PRESS 0>')
                 self.relay.value(relay_on_level)
                 state = 1
                 self.button.clear()
-            elif state == 1 and self.button.pressed() > Button.NOT_PRESSED:
+            elif state == 1 and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 1>')
                 self.messaging.publish('<Button: SHORT_PRESS 1>')
                 self.relay.value(not relay_on_level)
                 state = 0
                 self.button.clear()
-            elif state == 0 and self.button.pressed() == Button.LONG_PRESS:
+            elif state == 0 and self.button.pressed() == self.button.LONG_PRESS:
                 if self.verbose:
                     print('<Button: LONG_PRESS 0>')
                 self.messaging.publish('<Button: LONG_PRESS 0>')
                 self.led.off()
                 state = 2
                 self.button.clear()
-            elif state == 2 and self.button.pressed() > Button.NOT_PRESSED:
+            elif state == 2 and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: LONG_PRESS 2>')
                 self.messaging.publish('<Button: LONG_PRESS 2>')
