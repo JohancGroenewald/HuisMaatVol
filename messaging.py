@@ -13,9 +13,10 @@ class Messaging:
         self.msg = None
 
     def __repr__(self):
-        return '<Messaging: {}, {}, {}:{}, {} at {:x}>'.format(
+        return '<Messaging: {}, {}, subscribed:{}, {}:{}, {} at {:x}>'.format(
             self.device_id,
             'MQTT',
+            self.config['mqtt']['subscribe'],
             self.config['mqtt']['ip'],
             self.config['mqtt']['port'],
             self.mqtt,
@@ -40,7 +41,6 @@ class Messaging:
             message = {'state': 'connected'}
             self.publish(message)
             if self.config['mqtt']['subscribe']:
-                print('Subscribing...')
                 self.mqtt.set_callback(self.callback)
                 self.mqtt.subscribe(self.device_id)
 
