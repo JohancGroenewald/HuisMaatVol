@@ -24,6 +24,12 @@ class Messaging:
             id(self)
         )
 
+    def instructions(self):
+        return self.msg
+
+    def completed(self):
+        self.msg = None
+
     def poll(self):
         if self.mqtt is not None:
             self.mqtt.check_msg()
@@ -32,7 +38,6 @@ class Messaging:
     @staticmethod
     def callback(topic, msg):
         Messaging.msg = json.dumps(msg)
-        print(topic, msg, Messaging.msg)
 
     def connect(self):
         if self.mqtt is None:
