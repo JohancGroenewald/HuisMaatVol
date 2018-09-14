@@ -22,7 +22,8 @@ class Messaging:
         )
 
     def poll(self):
-        pass
+        if self.mqtt is not None:
+            self.mqtt.wait_msg()
 
     @staticmethod
     def callback(topic, msg):

@@ -4,9 +4,7 @@ from micropython import mem_info
 
 
 def run():
-    print('-' * 69)
-    print(mem_info())
-    print('-' * 69)
+    print('{}\n{}\n{}'.format('-' * 69, mem_info(), '-' * 69))
     system_modules = [
         # 'flashbdev',
         # 'webrepl',
@@ -36,9 +34,7 @@ def run():
         del modules['unload']
 
     collect()
-    print('-' * 69)
-    print(mem_info())
-    print('-' * 69)
+    print('{}\n{}\n{}'.format('-' * 69, mem_info(), '-' * 69))
 
 
 run()
