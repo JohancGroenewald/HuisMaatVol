@@ -29,7 +29,7 @@ class Messaging:
     def callback(topic, msg):
         print(topic, msg)
 
-    def connect(self, subscribe=False):
+    def connect(self):
         if self.mqtt is None:
             self.mqtt = MQTTClient(
                 client_id=self.device_id, server=self.config['mqtt']['ip'], port=self.config['mqtt']['port']
@@ -37,7 +37,7 @@ class Messaging:
             self.mqtt.connect()
             message = {'state': 'connected'}
             self.publish(message)
-            if subscribe:
+            if self.config['mqtt']['subscribe']:
                 self.mqtt.set_callback(self.callback)
                 self.mqtt.subscribe(self.device_id)
 
