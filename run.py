@@ -57,6 +57,7 @@ class RunLoop:
         if self.verbose:
             print('<{} with id {}>'.format(self.config['device']['name'], self.device_id))
             print(self.led)
+            print(self.button)
             print(self.wifi)
             print(self.messaging)
 
@@ -106,6 +107,13 @@ class RunLoop:
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
                 if self.messaging.poll():
+                    if 'action' in self.messaging.instructions():
+                        if self.messaging.instructions()['action'] == 'on':
+                            self.relay.value(relay_on_level)
+                            state = 1
+                        if self.messaging.instructions()['action'] == 'off':
+                            self.relay.value(not relay_on_level)
+                            state = 0
                     self.messaging.completed()
             elif self.wifi.connecting():
                 self.led.toggle(250)
