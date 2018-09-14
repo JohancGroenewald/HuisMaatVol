@@ -37,7 +37,7 @@ class Messaging:
 
     @staticmethod
     def callback(topic, msg):
-        Messaging.msg = json.dumps(msg)
+        Messaging.msg = json.loads(msg)
 
     def connect(self):
         if self.mqtt is None:
