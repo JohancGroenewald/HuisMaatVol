@@ -107,6 +107,7 @@ class RunLoop:
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
                 if self.messaging.poll():
+                    print(self.messaging.instructions())
                     if 'action' in self.messaging.instructions():
                         if self.messaging.instructions()['action'] == 'on':
                             self.relay.value(relay_on_level)
