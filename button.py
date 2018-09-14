@@ -1,5 +1,9 @@
-import time
-import machine
+from micropython import opt_level
+print('{} opt_level: {}'.format(__name__, opt_level()))
+
+# noinspection PyUnresolvedReferences
+from time import ticks_ms, ticks_diff
+from machine import Pin
 
 
 # noinspection PyUnresolvedReferences,PyArgumentList
@@ -21,7 +25,7 @@ class Button:
         self.button_pin = pin
         self.on_level = on_level
         self.start = None
-        self.pin = machine.Pin(self.button_pin, machine.Pin.IN)
+        self.pin = Pin(self.button_pin, Pin.IN)
         self.state = self.STATE_OFF
         self._pressed = self.NOT_PRESSED
 
@@ -37,15 +41,15 @@ class Button:
                     print('STATE_OFF -> on_level')
                 self._pressed = self.NOT_PRESSED
                 self.state = self.STATE_UP
-                self.start = time.ticks_ms()
+                self.start = ticks_ms()
         elif self.state == self.STATE_UP:
-            ticked = time.ticks_ms()
-            if time.ticks_diff(ticked, self.start) >= self.DEBOUNCE_DELAY:
+            ticked = ticks_ms()
+            if ticks_diff(ticked, self.start) >= self.DEBOUNCE_DELAY:
                 if self.pin.value() == self.on_level:
                     if self.verbose:
                         print('STATE_UP -> on_level')
                     self.state = self.STATE_ON
-                    self.start = time.ticks_ms()
+                    self.start = ticks_ms()
                 else:
                     if self.verbose:
                         print('STATE_UP -> off_level')
@@ -57,14 +61,14 @@ class Button:
                     print('STATE_ON -> off_level')
                 self.state = self.STATE_DOWN
         elif self.state == self.STATE_DOWN:
-            ticked = time.ticks_ms()
-            if time.ticks_diff(ticked, self.start) >= self.DEBOUNCE_DELAY:
+            ticked = ticks_ms()
+            if ticks_diff(ticked, self.start) >= self.DEBOUNCE_DELAY:
                 if self.pin.value() == self.on_level:
                     self.state = self.STATE_ON
                     if self.verbose:
                         print('STATE_DOWN -> on_level')
                 else:
-                    delta = time.ticks_diff(ticked, self.start)
+                    delta = ticks_diff(ticked, self.start)
                     if self.verbose:
                         print('STATE_DOWN -> off_level: {}'.format(delta))
                     if delta >= self.LONG_PULSE:

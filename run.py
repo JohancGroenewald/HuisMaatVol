@@ -1,9 +1,8 @@
 from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
-import time
-from led import Led, MockLed
-from button import Button, MockButton
+# noinspection PyUnresolvedReferences
+from time import sleep, sleep_ms
 from wifi import WiFi
 from messaging import Messaging
 
@@ -23,15 +22,19 @@ class RunLoop:
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialise required services
         if self.config['pinout']['led'] is None:
+            from led import MockLed
             self.led = MockLed()
         else:
+            from led import Led
             self.led = Led(
                 self.config['pinout']['led']['pin'],
                 self.config['pinout']['led']['on_level']
             )
         if self.config['pinout']['button'] is None:
+            from button import MockButton
             self.button = MockButton()
         else:
+            from button import Button
             self.button = Button(
                 self.config['pinout']['button']['pin'],
                 self.config['pinout']['button']['on_level']
@@ -45,7 +48,7 @@ class RunLoop:
         # ------------------------------------------------------------------------------------------------------------ #
         # Application ready feedback --------------------------------------------------------------------------------- #
         self.led.on(poll=True)
-        time.sleep(2)
+        sleep(2)
         self.led.off(poll=True)
         # ------------------------------------------------------------------------------------------------------------ #
         if self.wifi.connected():
@@ -111,7 +114,7 @@ class RunLoop:
                 if self.wifi.connected():
                     self.on_wifi_connected()
             # ======================================================================================================== #
-            time.sleep_ms(self.sleep_ms)  # Reduce the tightness of the run loop
+            sleep_ms(self.sleep_ms)  # Reduce the tightness of the run loop
             # ======================================================================================================== #
         if self.verbose:
             print('Run loop exited')
