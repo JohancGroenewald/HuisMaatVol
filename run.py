@@ -133,6 +133,10 @@ class RunLoop:
         self.exit = True
         if self.led:
             self.led.close()
+        if self.button:
+            self.button.close()
+        if self.relay:
+            self.relay.value(0)
         if self.messaging:
             self.messaging.disconnect()
         # if self.wifi:
