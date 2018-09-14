@@ -7,6 +7,7 @@ from button import Button, MockButton
 from wifi import WiFi
 from messaging import Messaging
 
+from machine import Pin
 
 # noinspection PyUnresolvedReferences
 class RunLoop:
@@ -35,6 +36,9 @@ class RunLoop:
                 self.config['pinout']['button']['pin'],
                 self.config['pinout']['button']['on_level']
             )
+
+        self.relay = Pin(CONFIG['pinout']['relay']['pin'], Pin.OUT)
+
         self.wifi = WiFi(self.config, verbose=self.verbose)
         self.device_id = self.wifi.device_id()
         self.messaging = Messaging(self.config, self.device_id)
@@ -62,6 +66,7 @@ class RunLoop:
         if self.verbose:
             print('Run loop started')
         state = 0
+        relay_on_level = 1
         while not self.exit:
             # ======================================================================================================== #
             self.led.poll()
@@ -71,14 +76,14 @@ class RunLoop:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 0>')
                 self.messaging.publish('<Button: SHORT_PRESS 0>')
-                relay.value(relay_on_level)
+                self.relay.value(relay_on_level)
                 state = 1
                 self.button.clear()
             elif state == 1 and self.button.pressed() > Button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 1>')
                 self.messaging.publish('<Button: SHORT_PRESS 1>')
-                relay.value(not relay_on_level)
+                self.relay.value(not relay_on_level)
                 state = 0
                 self.button.clear()
             elif state == 0 and self.button.pressed() == Button.LONG_PRESS:
