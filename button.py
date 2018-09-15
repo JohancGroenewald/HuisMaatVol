@@ -22,15 +22,15 @@ class Button:
 
     def __init__(self, pin, on_level, verbose=0):
         self.verbose = verbose
-        self.button_pin = pin
+        self.gpio_pin = pin
         self.on_level = on_level
         self.start = None
-        self.pin = Pin(self.button_pin, Pin.IN)
+        self.pin = Pin(self.gpio_pin, Pin.IN)
         self.state = self.STATE_OFF
         self._pressed = self.NOT_PRESSED
 
     def __repr__(self):
-        return '<Button: On pin {} at {:x}>'.format(self.button_pin, id(self))
+        return '<Button: On pin {} at {:x}>'.format(self.gpio_pin, id(self))
 
     def poll(self):
         if self._pressed != self.NOT_PRESSED:

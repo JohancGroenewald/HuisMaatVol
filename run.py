@@ -21,6 +21,7 @@ class RunLoop:
         self.sleep_ms = self.SLEEP_MS_DEFAULT
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialise required services
+        # ------------------------------------------------------------------------------------------------------------ #
         if self.config['pinout']['led'] is None:
             from led import MockLed
             self.led = MockLed()
@@ -30,6 +31,7 @@ class RunLoop:
                 self.config['pinout']['led']['pin'],
                 self.config['pinout']['led']['on_level']
             )
+        # ------------------------------------------------------------------------------------------------------------ #
         if self.config['pinout']['button'] is None:
             from button import MockButton
             self.button = MockButton()
@@ -39,9 +41,17 @@ class RunLoop:
                 self.config['pinout']['button']['pin'],
                 self.config['pinout']['button']['on_level']
             )
-
-        self.relay = Pin(self.config['pinout']['relay']['pin'], Pin.OUT)
-
+        # ------------------------------------------------------------------------------------------------------------ #
+        if self.config['pinout']['relay'] is None:
+            from relay import MockRelay
+            self.relay = MockRelay()
+        else:
+            from relay import Relay
+            self.relay = Relay(
+                self.config['pinout']['relay']['pin'],
+                self.config['pinout']['relay']['on_level']
+            )
+        # ------------------------------------------------------------------------------------------------------------ #
         self.wifi = WiFi(self.config, verbose=self.verbose)
         self.device_id = self.wifi.device_id()
         self.messaging = Messaging(self.config, self.device_id)
@@ -70,7 +80,6 @@ class RunLoop:
         if self.verbose:
             print('Run loop started')
         state = 0
-        relay_on_level = 1
         while not self.exit:
             # ======================================================================================================== #
             self.led.poll()
@@ -80,14 +89,14 @@ class RunLoop:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 0>')
                 self.messaging.publish({'state': '<Button: SHORT_PRESS 0>'})
-                self.relay.value(relay_on_level)
+                self.relay.on()
                 state = 1
                 self.button.clear()
             elif state == 1 and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 1>')
                 self.messaging.publish({'state': '<Button: SHORT_PRESS 1>'})
-                self.relay.value(not relay_on_level)
+                self.relay.off()
                 state = 0
                 self.button.clear()
             elif state == 0 and self.button.pressed() == self.button.LONG_PRESS:
@@ -109,10 +118,10 @@ class RunLoop:
                 if self.messaging.poll():
                     if 'action' in self.messaging.msg:
                         if self.messaging.msg['action'] == 'on':
-                            self.relay.value(relay_on_level)
+                            self.relay.on()
                             state = 1
                         elif self.messaging.msg['action'] == 'off':
-                            self.relay.value(not relay_on_level)
+                            self.relay.off()
                             state = 0
                         elif self.messaging.msg['action'] == 'exit':
                             self.exit = True
@@ -136,7 +145,7 @@ class RunLoop:
         if self.button:
             self.button.close()
         if self.relay:
-            self.relay.value(0)
+            self.relay.close()
         if self.messaging:
             self.messaging.disconnect()
         # if self.wifi:
