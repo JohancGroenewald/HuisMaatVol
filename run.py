@@ -68,6 +68,7 @@ class RunLoop:
             print('<{} with id {}>'.format(self.config['device']['name'], self.device_id))
             print(self.led)
             print(self.button)
+            print(self.relay)
             print(self.wifi)
             print(self.messaging)
 
