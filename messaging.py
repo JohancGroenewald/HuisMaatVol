@@ -25,7 +25,7 @@ class Messaging:
         )
 
     @staticmethod
-    def completed(self):
+    def completed():
         Messaging.msg = None
 
     def poll(self):
