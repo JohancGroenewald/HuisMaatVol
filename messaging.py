@@ -24,11 +24,9 @@ class Messaging:
             id(self)
         )
 
-    def instructions(self):
-        return self.msg
-
+    @staticmethod
     def completed(self):
-        self.msg = None
+        Messaging.msg = None
 
     def poll(self):
         if self.mqtt is not None:

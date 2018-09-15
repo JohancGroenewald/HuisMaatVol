@@ -107,15 +107,14 @@ class RunLoop:
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
                 if self.messaging.poll():
-                    print(type(self.messaging.instructions()), self.messaging.instructions())
-                    if 'action' in self.messaging.instructions():
-                        if self.messaging.instructions()['action'] == 'on':
+                    if 'action' in self.messaging.msg:
+                        if self.messaging.msg['action'] == 'on':
                             self.relay.value(relay_on_level)
                             state = 1
-                        elif self.messaging.instructions()['action'] == 'off':
+                        elif self.messaging.msg['action'] == 'off':
                             self.relay.value(not relay_on_level)
                             state = 0
-                        elif self.messaging.instructions()['action'] == 'exit':
+                        elif self.messaging.msg['action'] == 'exit':
                             self.exit = True
                     self.messaging.completed()
             elif self.wifi.connecting():
