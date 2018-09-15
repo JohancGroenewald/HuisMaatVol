@@ -21,15 +21,15 @@ class Relay:
         return '<Relay: On pin {} at {:x}>'.format(self.gpio_pin, id(self))
 
     def off(self):
-        self.relay.value(not self.on_level)
+        self.pin.value(not self.on_level)
         self.state = Relay.STATE_OFF
 
     def on(self, poll=False):
-        self.relay.value(self.on_level)
+        self.pin.value(self.on_level)
         self.state = Relay.STATE_ON
 
     def toggle(self, pulse_width=None):
-        self.relay.value(not self.relay.value())
+        self.pin.value(not self.pin.value())
         self.state = not self.state
 
     def close(self):
