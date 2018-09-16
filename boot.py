@@ -2,9 +2,13 @@
 #import esp
 #esp.osdebug(None)
 
+from micropython import opt_level
+opt_level(3)
+
 # noinspection PyUnresolvedReferences
 from gc import collect
 # collect()
+# noinspection PyUnresolvedReferences
 from webrepl import start
 # collect()
 from wifi import WiFi
@@ -14,4 +18,4 @@ from config import CONFIG
 start()
 collect()
 WiFi(CONFIG).connect()
-# collect()
+collect()

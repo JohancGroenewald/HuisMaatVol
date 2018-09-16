@@ -85,13 +85,13 @@ class RunLoop:
             self.led.poll()
             self.button.poll()
             # -------------------------------------------------------------------------------------------------------- #
-            if relay.state() == relay.STATE_OFF and self.button.pressed() == self.button.SHORT_PRESS:
+            if self.relay.state() == self.relay.STATE_OFF and self.button.pressed() == self.button.SHORT_PRESS:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 0>')
                 self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: on>'})
                 self.relay.on()
                 self.button.clear()
-            elif relay.state() == relay.STATE_ON and self.button.pressed() > self.button.NOT_PRESSED:
+            elif self.relay.state() == self.relay.STATE_ON and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 1>')
                 self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: off>'})
@@ -114,7 +114,6 @@ class RunLoop:
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
                 if self.messaging.poll():
-                    print(self.messaging.msg)
                     if 'action' in self.messaging.msg:
                         if self.messaging.msg['action'] == 'on':
                             if self.verbose:
