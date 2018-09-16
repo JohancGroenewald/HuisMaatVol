@@ -3,12 +3,15 @@
 #esp.osdebug(None)
 
 # noinspection PyUnresolvedReferences
-import webrepl
+from gc import collect
+# collect()
+from webrepl import start
+# collect()
 from wifi import WiFi
-
+# collect()
 from config import CONFIG
-
-webrepl.start()
+# collect()
+start()
+collect()
 WiFi(CONFIG).connect()
-
-import unload
+# collect()

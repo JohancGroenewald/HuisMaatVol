@@ -65,7 +65,7 @@ class RunLoop:
             self.on_wifi_connected()
         # ------------------------------------------------------------------------------------------------------------ #
         if self.verbose:
-            print('<{} with id {}>'.format(self.config['device']['name'], self.device_id))
+            print('<{} with id {}>'.format(self.config['device']['type'], self.device_id))
             print(self.led)
             print(self.button)
             print(self.relay)
