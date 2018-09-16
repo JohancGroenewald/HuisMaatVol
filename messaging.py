@@ -51,6 +51,7 @@ class Messaging:
 
     def publish(self, message):
         message['device_id'] = self.device_id
+        message['device_type'] = self.config['device']['type']
         self.mqtt.publish(self.config['mqtt']['topic'], json.dumps(message))
 
     def disconnect(self):

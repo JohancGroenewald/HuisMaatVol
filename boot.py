@@ -4,13 +4,11 @@
 
 # noinspection PyUnresolvedReferences
 import webrepl
-# import wifi
-from gc import collect
-# import sys
+from wifi import WiFi
 
-# from config import CONFIG
+from config import CONFIG
 
 webrepl.start()
-# wifi.WiFi(CONFIG).connect()
-# del sys.modules['config']
-collect()
+WiFi(CONFIG).connect()
+
+import unload
