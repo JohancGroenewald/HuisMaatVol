@@ -11,7 +11,7 @@ class Relay:
 
     def __init__(self, pin, on_level, verbose=0):
         self.verbose = verbose
-        self.state = None
+        self._state = None
         self.gpio_pin = pin
         self.on_level = on_level
         self.pin = Pin(self.gpio_pin, Pin.OUT)
@@ -20,28 +20,36 @@ class Relay:
     def __repr__(self):
         return '<Relay: On pin {} at {:x}>'.format(self.gpio_pin, id(self))
 
+    def state(self):
+        return self._state
+
     def off(self):
         self.pin.value(not self.on_level)
-        self.state = Relay.STATE_OFF
+        self._state = Relay.STATE_OFF
 
     def on(self, poll=False):
         self.pin.value(self.on_level)
-        self.state = Relay.STATE_ON
+        self._state = Relay.STATE_ON
 
     def toggle(self, pulse_width=None):
         self.pin.value(not self.pin.value())
-        self.state = not self.state
+        self._state = not self._state
 
     def close(self):
         self.off()
 
 
 class MockRelay:
+    STATE_OFF = 0
+
     def __init__(self):
         pass
 
     def __repr__(self):
         return '<MockRelay at {:x}>'.format(id(self))
+
+    def state(self):
+        return self.STATE_OFF
 
     def off(self, poll=False):
         pass

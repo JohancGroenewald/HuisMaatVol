@@ -6,11 +6,11 @@ from time import sleep, sleep_ms
 from wifi import WiFi
 from messaging import Messaging
 
-from machine import Pin
 
 # noinspection PyUnresolvedReferences
 class RunLoop:
     SLEEP_MS_DEFAULT = 20
+    LED_TOGGLE_DEFAULT = 500
 
     def __init__(self, config, verbose=0):
         self.verbose = verbose
@@ -73,61 +73,57 @@ class RunLoop:
             print(self.messaging)
 
     def on_wifi_connected(self):
-        self.led.toggle(500)
+        self.led.toggle(self.LED_TOGGLE_DEFAULT)
         if not self.messaging.connected():
             self.messaging.connect()
 
     def run(self):
         if self.verbose:
             print('Run loop started')
-        state = 0
         while not self.exit:
             # ======================================================================================================== #
             self.led.poll()
             self.button.poll()
             # -------------------------------------------------------------------------------------------------------- #
-            if state == 0 and self.button.pressed() == self.button.SHORT_PRESS:
+            if relay.state() == relay.STATE_OFF and self.button.pressed() == self.button.SHORT_PRESS:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 0>')
-                self.messaging.publish({'state': '<Button: SHORT_PRESS, state: on>'})
+                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: on>'})
                 self.relay.on()
-                state = 1
                 self.button.clear()
-            elif state == 1 and self.button.pressed() > self.button.NOT_PRESSED:
+            elif relay.state() == relay.STATE_ON and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: SHORT_PRESS 1>')
-                self.messaging.publish({'state': '<Button: SHORT_PRESS, state: off>'})
+                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: off>'})
                 self.relay.off()
-                state = 0
                 self.button.clear()
-            elif state == 0 and self.button.pressed() == self.button.LONG_PRESS:
+            elif self.led.enabled() is True and self.button.pressed() == self.button.LONG_PRESS:
                 if self.verbose:
                     print('<Button: LONG_PRESS 0>')
-                self.messaging.publish({'state': '<Button: LONG_PRESS, state: on>'})
+                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: off>'})
+                self.led.enable(False)
                 self.led.off()
-                state = 2
                 self.button.clear()
-            elif state == 2 and self.button.pressed() > self.button.NOT_PRESSED:
+            elif self.led.enabled() is False and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
                     print('<Button: LONG_PRESS 2>')
-                self.messaging.publish({'state': '<Button: LONG_PRESS, state: off>'})
-                self.led.toggle(500)
-                state = 0
+                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: on>'})
+                self.led.enable(True)
+                self.led.toggle(self.LED_TOGGLE_DEFAULT)
                 self.button.clear()
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
                 if self.messaging.poll():
+                    print(self.messaging.msg)
                     if 'action' in self.messaging.msg:
                         if self.messaging.msg['action'] == 'on':
                             if self.verbose:
                                 print('<Relay: on>')
                             self.relay.on()
-                            state = 1
                         elif self.messaging.msg['action'] == 'off':
                             if self.verbose:
                                 print('<Relay: off>')
                             self.relay.off()
-                            state = 0
                         elif self.messaging.msg['action'] == 'exit':
                             if self.verbose:
                                 print('<Application: exit>')
