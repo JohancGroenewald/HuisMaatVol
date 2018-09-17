@@ -7,7 +7,6 @@ Update history
 """
 from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
-opt_level(3)
 
 
 def application():

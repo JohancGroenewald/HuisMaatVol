@@ -52,13 +52,13 @@ class WiFi:
                 self.connect_start = None
                 if self.verbose:
                     print(self)
-            elif (time - self.connect_start) > self.RECONNECT_TIMEOUT:
+            elif (time() - self.connect_start) > self.RECONNECT_TIMEOUT:
                 self.station.active(False)
                 self.__connecting = False
-                self.connect_start = time
+                self.connect_start = time()
         elif self.station.isconnected() is False:
-            if self.connect_start is None or (time - self.connect_start) > self.RECONNECT_TIMEOUT:
-                self.connect_start = time
+            if self.connect_start is None or (time() - self.connect_start) > self.RECONNECT_TIMEOUT:
+                self.connect_start = time()
             else:
                 return
             self.station.active(True)

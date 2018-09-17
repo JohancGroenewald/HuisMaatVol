@@ -7,10 +7,10 @@ opt_level(3)
 
 # noinspection PyUnresolvedReferences
 from gc import collect
-# collect()
+collect()
 # noinspection PyUnresolvedReferences
 from webrepl import start
-# collect()
+collect()
 # from wifi import WiFi
 # collect()
 # from config import CONFIG

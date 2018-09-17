@@ -73,6 +73,8 @@ class RunLoop:
             print(self.messaging)
 
     def on_wifi_connected(self):
+        if self.verbose:
+            print(self.wifi)
         self.led.toggle(self.LED_TOGGLE_DEFAULT)
         if not self.messaging.connected():
             self.messaging.connect()
