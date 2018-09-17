@@ -113,6 +113,8 @@ class RunLoop:
                 self.button.clear()
             # -------------------------------------------------------------------------------------------------------- #
             if self.wifi.connected():
+                if self.messaging.connected() is False:
+                    self.on_wifi_connected()
                 if self.messaging.poll():
                     if 'action' in self.messaging.msg:
                         if self.messaging.msg['action'] == 'on':
@@ -128,12 +130,10 @@ class RunLoop:
                                 print('<Application: exit>')
                             self.exit = True
                     self.messaging.completed()
-            elif self.wifi.connecting():
-                self.led.toggle(250)
-            elif not self.wifi.connected():
+            elif self.wifi.connected() is False:
+                if self.wifi.connecting() is False:
+                    self.led.toggle(250)
                 self.wifi.connect()
-                if self.wifi.connected():
-                    self.on_wifi_connected()
             # ======================================================================================================== #
             sleep_ms(self.sleep_ms)  # Reduce the tightness of the run loop
             # ======================================================================================================== #

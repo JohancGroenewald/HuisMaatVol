@@ -11,11 +11,17 @@ from gc import collect
 # noinspection PyUnresolvedReferences
 from webrepl import start
 # collect()
-from wifi import WiFi
+# from wifi import WiFi
 # collect()
-from config import CONFIG
+# from config import CONFIG
 # collect()
+from application import application
+collect()
+
 start()
 collect()
-WiFi(CONFIG).connect()
+application()
 collect()
+
+# WiFi(CONFIG).connect()
+# collect()

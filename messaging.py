@@ -50,6 +50,8 @@ class Messaging:
                 self.mqtt.subscribe(self.device_id)
 
     def publish(self, message):
+        if self.mqtt is None:
+            return
         message['device_id'] = self.device_id
         message['device_type'] = self.config['device']['type']
         self.mqtt.publish(self.config['mqtt']['topic'], json.dumps(message))

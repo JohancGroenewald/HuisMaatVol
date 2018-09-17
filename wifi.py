@@ -4,6 +4,7 @@ print('{} opt_level: {}'.format(__name__, opt_level()))
 import network
 # noinspection PyUnresolvedReferences
 import ure
+from utime import time
 
 
 def singleton(cls):
@@ -20,10 +21,13 @@ def singleton(cls):
 # noinspection PyUnresolvedReferences,PyArgumentList
 @singleton
 class WiFi:
+    RECONNECT_TIMEOUT = 5
+
     def __init__(self, config, verbose=0):
         self.verbose = verbose
         self.config = config
         self.__connecting = False
+        self.connect_start = None
         self.station = network.WLAN(network.STA_IF)
 
     def __repr__(self):
@@ -45,9 +49,18 @@ class WiFi:
         if self.__connecting:
             if self.station.isconnected():
                 self.__connecting = False
+                self.connect_start = None
                 if self.verbose:
                     print(self)
-        elif not self.station.isconnected():
+            elif (time - self.connect_start) > self.RECONNECT_TIMEOUT:
+                self.station.active(False)
+                self.__connecting = False
+                self.connect_start = time
+        elif self.station.isconnected() is False:
+            if self.connect_start is None or (time - self.connect_start) > self.RECONNECT_TIMEOUT:
+                self.connect_start = time
+            else:
+                return
             self.station.active(True)
             ssid, password = self.scan()
             if ssid:
