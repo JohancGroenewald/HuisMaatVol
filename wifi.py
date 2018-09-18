@@ -5,6 +5,7 @@ import network
 # noinspection PyUnresolvedReferences
 import ure
 from utime import time
+from time import sleep
 
 
 def singleton(cls):
@@ -21,7 +22,7 @@ def singleton(cls):
 # noinspection PyUnresolvedReferences,PyArgumentList
 @singleton
 class WiFi:
-    RECONNECT_TIMEOUT = 5
+    RECONNECT_TIMEOUT = 10
 
     def __init__(self, config, verbose=0):
         self.verbose = verbose
@@ -50,21 +51,29 @@ class WiFi:
             if self.station.isconnected():
                 self.__connecting = False
                 self.connect_start = None
-                if self.verbose:
-                    print(self)
             elif (time() - self.connect_start) > self.RECONNECT_TIMEOUT:
-                self.station.active(False)
+                # self.station.active(False)
                 self.__connecting = False
                 self.connect_start = time()
+                if self.verbose:
+                    print('-> ' 'Connect timeout')
         elif self.station.isconnected() is False:
             if self.connect_start is None or (time() - self.connect_start) > self.RECONNECT_TIMEOUT:
+                if self.verbose:
+                    if self.connect_start is None:
+                        print('-> ' 'Reconnect ' 'timer started')
+                    else:
+                        print('-> ' 'Reconnect ' 'timeout')
                 self.connect_start = time()
             else:
                 return
             self.station.active(True)
             ssid, password = self.scan()
+            if self.verbose:
+                print('[{}] [{}]'.format(ssid, password))
             if ssid:
                 self.station.connect(ssid, password)
+                sleep(1)
                 self.__connecting = True
 
     def disconnect(self):
@@ -80,6 +89,9 @@ class WiFi:
                 if ure.search(mask, ap[0]):
                     ap_list.append((ap[3], ap[0], password))
         ap_list.sort(reverse=True)
+        if self.verbose:
+            for ap in ap_list:
+                print(ap)
         if len(ap_list):
             ssid, password = ap_list[0][1], ap_list[0][2]
         return ssid, password

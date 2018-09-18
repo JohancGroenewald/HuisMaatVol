@@ -62,7 +62,7 @@ class RunLoop:
         self.led.off(poll=True)
         # ------------------------------------------------------------------------------------------------------------ #
         if self.wifi.connected():
-            self.on_wifi_connected()
+            self.on_wifi_connected(be_verbose=False)
         # ------------------------------------------------------------------------------------------------------------ #
         if self.verbose:
             print('<{} with id {}>'.format(self.config['device']['type'], self.device_id))
@@ -72,8 +72,8 @@ class RunLoop:
             print(self.wifi)
             print(self.messaging)
 
-    def on_wifi_connected(self):
-        if self.verbose:
+    def on_wifi_connected(self, be_verbose=True):
+        if be_verbose and self.verbose:
             print(self.wifi)
         self.led.toggle(self.LED_TOGGLE_DEFAULT)
         if not self.messaging.connected():
@@ -89,27 +89,27 @@ class RunLoop:
             # -------------------------------------------------------------------------------------------------------- #
             if self.relay.state() == self.relay.STATE_OFF and self.button.pressed() == self.button.SHORT_PRESS:
                 if self.verbose:
-                    print('<Button: SHORT_PRESS 0>')
-                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: on>'})
+                    print('<Button: SHORT_PRESS {}>'.format('0'))
+                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: {}>'.format('on')})
                 self.relay.on()
                 self.button.clear()
             elif self.relay.state() == self.relay.STATE_ON and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
-                    print('<Button: SHORT_PRESS 1>')
-                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: off>'})
+                    print('<Button: SHORT_PRESS {}>'.format('1'))
+                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: {}>'.format('off')})
                 self.relay.off()
                 self.button.clear()
             elif self.led.enabled() is True and self.button.pressed() == self.button.LONG_PRESS:
                 if self.verbose:
-                    print('<Button: LONG_PRESS 0>')
-                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: off>'})
+                    print('<Button: LONG_PRESS {}>'.format('0'))
+                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: {}>'.format('off')})
                 self.led.enable(False)
                 self.led.off()
                 self.button.clear()
             elif self.led.enabled() is False and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
-                    print('<Button: LONG_PRESS 2>')
-                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: on>'})
+                    print('<Button: LONG_PRESS {}>'.format('2'))
+                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: {}>'.format('on')})
                 self.led.enable(True)
                 self.led.toggle(self.LED_TOGGLE_DEFAULT)
                 self.button.clear()

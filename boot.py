@@ -11,10 +11,6 @@ collect()
 # noinspection PyUnresolvedReferences
 from webrepl import start
 collect()
-# from wifi import WiFi
-# collect()
-# from config import CONFIG
-# collect()
 from application import application
 collect()
 
@@ -22,6 +18,3 @@ start()
 collect()
 application()
 collect()
-
-# WiFi(CONFIG).connect()
-# collect()
