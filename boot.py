@@ -3,7 +3,7 @@
 #esp.osdebug(None)
 
 from micropython import opt_level
-opt_level(3)
+opt_level(4)
 
 # noinspection PyUnresolvedReferences
 from gc import collect

@@ -2,7 +2,9 @@ from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
 from gc import collect
+collect()
 import usocket as socket
+collect()
 import ustruct as struct
 # from ubinascii import hexlify
 collect()

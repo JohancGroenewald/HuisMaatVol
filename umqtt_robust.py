@@ -2,6 +2,7 @@ from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
 from gc import collect
+collect()
 from utime import sleep
 collect()
 import umqtt_simple as simple

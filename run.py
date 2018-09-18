@@ -3,12 +3,14 @@ print('{} opt_level: {}'.format(__name__, opt_level()))
 
 # noinspection PyUnresolvedReferences
 from gc import collect
+collect()
 from time import sleep, sleep_ms
 collect()
 from wifi import WiFi
 collect()
 from messaging import Messaging
 collect()
+
 
 # noinspection PyUnresolvedReferences
 class RunLoop:
@@ -92,27 +94,27 @@ class RunLoop:
             # -------------------------------------------------------------------------------------------------------- #
             if self.relay.state() == self.relay.STATE_OFF and self.button.pressed() == self.button.SHORT_PRESS:
                 if self.verbose:
-                    print('<Button: SHORT_PRESS {}>'.format('0'))
-                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: {}>'.format('on')})
+                    print('<Button: SHORT_PRESS ' '0' '>')
+                self.messaging.publish({'state': '<Button: SHORT_PRESS ' 'relay state: ' 'on' '>'})
                 self.relay.on()
                 self.button.clear()
             elif self.relay.state() == self.relay.STATE_ON and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
-                    print('<Button: SHORT_PRESS {}>'.format('1'))
-                self.messaging.publish({'state': '<Button: SHORT_PRESS, relay state: {}>'.format('off')})
+                    print('<Button: SHORT_PRESS ' '1' '>')
+                self.messaging.publish({'state': '<Button: SHORT_PRESS ' 'relay state: ' 'off' '>'})
                 self.relay.off()
                 self.button.clear()
             elif self.led.enabled() is True and self.button.pressed() == self.button.LONG_PRESS:
                 if self.verbose:
-                    print('<Button: LONG_PRESS {}>'.format('0'))
-                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: {}>'.format('off')})
+                    print('<Button: LONG_PRESS ' '0' '>')
+                self.messaging.publish({'state': '<Button: LONG_PRESS ' 'led enabled: ' 'off' '>'})
                 self.led.enable(False)
                 self.led.off()
                 self.button.clear()
             elif self.led.enabled() is False and self.button.pressed() > self.button.NOT_PRESSED:
                 if self.verbose:
-                    print('<Button: LONG_PRESS {}>'.format('2'))
-                self.messaging.publish({'state': '<Button: LONG_PRESS, led enabled: {}>'.format('on')})
+                    print('<Button: LONG_PRESS ' '2' '>')
+                self.messaging.publish({'state': '<Button: LONG_PRESS ' 'led enabled: ' 'on' '>'})
                 self.led.enable(True)
                 self.led.toggle(self.LED_TOGGLE_DEFAULT)
                 self.button.clear()
