@@ -4,7 +4,7 @@ from crc16 import crc16
 files = [f for f in os.listdir()]
 files.sort()
 for file in files:
-    if file in ['.git', '.gitignore', '.idea']:
+    if file in ['.git', '.gitignore', '.idea', '__pycache__']:
         continue
     s = os.stat(file)
     try:
