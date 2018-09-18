@@ -2,10 +2,13 @@ from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
 # noinspection PyUnresolvedReferences
+from gc import collect
 from time import sleep, sleep_ms
+collect()
 from wifi import WiFi
+collect()
 from messaging import Messaging
-
+collect()
 
 # noinspection PyUnresolvedReferences
 class RunLoop:
@@ -81,7 +84,7 @@ class RunLoop:
 
     def run(self):
         if self.verbose:
-            print('Run loop started')
+            print('Run loop ' 'started')
         while not self.exit:
             # ======================================================================================================== #
             self.led.poll()
@@ -121,15 +124,15 @@ class RunLoop:
                     if 'action' in self.messaging.msg:
                         if self.messaging.msg['action'] == 'on':
                             if self.verbose:
-                                print('<Relay: on>')
+                                print('<Relay: ' 'on' '>')
                             self.relay.on()
                         elif self.messaging.msg['action'] == 'off':
                             if self.verbose:
-                                print('<Relay: off>')
+                                print('<Relay: ' 'off' '>')
                             self.relay.off()
                         elif self.messaging.msg['action'] == 'exit':
                             if self.verbose:
-                                print('<Application: exit>')
+                                print('<Application: ' 'exit' '>')
                             self.exit = True
                     self.messaging.completed()
             elif self.wifi.connected() is False:
@@ -140,7 +143,7 @@ class RunLoop:
             sleep_ms(self.sleep_ms)  # Reduce the tightness of the run loop
             # ======================================================================================================== #
         if self.verbose:
-            print('Run loop exited')
+            print('Run loop ' 'exited')
 
     def close(self):
         self.exit = True
@@ -155,4 +158,4 @@ class RunLoop:
         # if self.wifi:
         #     self.wifi.disconnect()            # Don't do this, you will loose connection to the REPL
         if self.verbose:
-            print('Run loop closed')
+            print('Run loop ' 'closed')

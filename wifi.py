@@ -1,11 +1,13 @@
 from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
-import network
+from gc import collect
+from network import WLAN, STA_IF
 # noinspection PyUnresolvedReferences
-import ure
+from ure import search
 from utime import time
 from time import sleep
+collect()
 
 
 def singleton(cls):
@@ -29,7 +31,7 @@ class WiFi:
         self.config = config
         self.__connecting = False
         self.connect_start = None
-        self.station = network.WLAN(network.STA_IF)
+        self.station = WLAN(STA_IF)
 
     def __repr__(self):
         return '<WiFi: {}, {} at {:x}>'.format(
@@ -56,7 +58,7 @@ class WiFi:
                 self.__connecting = False
                 self.connect_start = time()
                 if self.verbose:
-                    print('-> ' 'Connect timeout')
+                    print('-> ' 'Connect ' 'timeout')
         elif self.station.isconnected() is False:
             if self.connect_start is None or (time() - self.connect_start) > self.RECONNECT_TIMEOUT:
                 if self.verbose:
@@ -86,7 +88,7 @@ class WiFi:
         for ap in ap_scan:
             for ssid_mask, password in self.config['wifi']:
                 mask = '^{}$'.format(ssid_mask)
-                if ure.search(mask, ap[0]):
+                if search(mask, ap[0]):
                     ap_list.append((ap[3], ap[0], password))
         ap_list.sort(reverse=True)
         if self.verbose:

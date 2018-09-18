@@ -1,9 +1,11 @@
 from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
+from gc import collect
 import usocket as socket
 import ustruct as struct
-from ubinascii import hexlify
+# from ubinascii import hexlify
+collect()
 
 class MQTTException(Exception):
     pass
@@ -145,7 +147,7 @@ class MQTTClient:
             assert 0
 
     def subscribe(self, topic, qos=0):
-        assert self.cb is not None, "Subscribe callback is not set"
+        # assert self.cb is not None, "Subscribe callback is not set"
         pkt = bytearray(b"\x82\0\0\0")
         self.pid += 1
         struct.pack_into("!BH", pkt, 1, 2 + 2 + len(topic) + 1, self.pid)

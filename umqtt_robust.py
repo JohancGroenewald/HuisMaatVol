@@ -1,9 +1,11 @@
 from micropython import opt_level
 print('{} opt_level: {}'.format(__name__, opt_level()))
 
-import utime
+from gc import collect
+from utime import sleep
+collect()
 import umqtt_simple as simple
-
+collect()
 
 class MQTTClient(simple.MQTTClient):
 
@@ -11,14 +13,14 @@ class MQTTClient(simple.MQTTClient):
     DEBUG = False
 
     def delay(self, i):
-        utime.sleep(self.DELAY)
+        sleep(self.DELAY)
 
     def log(self, in_reconnect, e):
         if self.DEBUG:
             if in_reconnect:
-                print("mqtt reconnect: %r" % e)
+                print("mqtt" " reconnect: %r" % e)
             else:
-                print("mqtt: %r" % e)
+                print("mqtt" ": %r" % e)
 
     def reconnect(self):
         i = 0
