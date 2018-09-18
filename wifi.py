@@ -68,7 +68,7 @@ class WiFi:
                         print('-> ' 'Reconnect ' 'timeout')
                 self.connect_start = time()
             else:
-                return
+                return False
             self.station.active(True)
             ssid, password = self.scan()
             if self.verbose:
@@ -77,6 +77,8 @@ class WiFi:
                 self.station.connect(ssid, password)
                 sleep(1)
                 self.__connecting = True
+            return True
+        return False
 
     def disconnect(self):
         self.station.disconnect()

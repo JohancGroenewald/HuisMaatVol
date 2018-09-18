@@ -138,7 +138,9 @@ class RunLoop:
             elif self.wifi.connected() is False:
                 if self.wifi.connecting() is False:
                     self.led.toggle(250)
-                self.wifi.connect()
+                    self.led.on(poll=True, save_state=True)
+                if self.wifi.connect() is True:
+                    self.led.off(poll=True, restore_state=True)
             # ======================================================================================================== #
             sleep_ms(self.sleep_ms)  # Reduce the tightness of the run loop
             # ======================================================================================================== #
