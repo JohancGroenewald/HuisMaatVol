@@ -57,7 +57,7 @@ class RunLoop:
                 self.config['pinout']['relay']['on_level']
             )
         # ------------------------------------------------------------------------------------------------------------ #
-        self.wifi = WiFi(self.config, verbose=self.verbose)
+        self.wifi = WiFi(self.config) # , verbose=self.verbose)
         self.device_id = self.wifi.device_id()
         self.messaging = Messaging(self.config, self.device_id)
         # ------------------------------------------------------------------------------------------------------------ #
