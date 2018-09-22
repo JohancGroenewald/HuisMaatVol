@@ -1,20 +1,25 @@
-# This file is executed on every boot (including wake-boot from deepsleep)
-#import esp
-#esp.osdebug(None)
+# This code will be specific to the ESP8266, ESP8285 and ESP32
+# Hopefully I can find a way to identify the type of SOC at boot time.
+# This start-up code is for the sake of responsiveness.
+from machine import Pin
 
-from micropython import opt_level
-opt_level(4)
+config = {
+    'device': 'ESP8266',
+    'button': {'pin': 0, 'active': 0},
+    'led': {'pin': 13, 'active': 0},
+    'relay': {'pin': 12, 'active': 1}
+}
 
-# noinspection PyUnresolvedReferences
-from gc import collect
-collect()
+button = Pin(config['button']['pin'], Pin.OUT)
+led = Pin(config['led']['pin'], Pin.OUT)
+relay = Pin(config['relay']['pin'], Pin.OUT)
+
+led.value(config['led']['active'])
+relay.value(config['relay']['active'])
+
 # noinspection PyUnresolvedReferences
 from webrepl import start
-collect()
-from application import application
-collect()
-
 start()
-collect()
-application()
+
+from gc import collect
 collect()
