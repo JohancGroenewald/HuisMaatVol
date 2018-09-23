@@ -8,6 +8,7 @@ button_delay = 450
 led_active = None
 relay_active = None
 timer_period = 3000
+led_visual_cycle = [25, 50, 25]
 
 
 def startup(config):
@@ -28,18 +29,19 @@ def startup(config):
 
 
 def interrupt_handlers():
-    button.irq(button_interrupt_rising, Pin.IRQ_RISING)
+    button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
     timer.init(mode=Timer.PERIODIC, period=timer_period, callback=timer_interrupt)
 
 
 def button_interrupt_rising(button):
     global button_start
+    print('button_interrupt_rising')
     button_start = ticks_ms()
     button.irq(handler=button_interrupt_falling, trigger=Pin.IRQ_FALLING)
 
 
 def button_interrupt_falling(button):
-    print('button_interrupt_falling')
+    print('button_interrupt_falling, button_start: {}'.format(button_start))
     global button_start
     if button_start and ticks_diff(ticks_ms(), button_start) >= button_delay:
         relay.value(not relay.value())
@@ -50,10 +52,10 @@ def button_interrupt_falling(button):
 
 def timer_interrupt(cls):
     led.value(led_active)
-    sleep_ms(20)
+    sleep_ms(led_visual_cycle[0])
     led.value(not led_active)
     if relay.value() == relay_active:
-        sleep_ms(40)
+        sleep_ms(led_visual_cycle[1])
         led.value(led_active)
-        sleep_ms(20)
+        sleep_ms(led_visual_cycle[2])
         led.value(not led_active)
