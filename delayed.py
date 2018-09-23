@@ -57,7 +57,7 @@ def led_interrupt(timer):
     v.led.value(v.config['led']['active'])
     sleep_ms(v.config['led']['visual_cycle'][0])
     v.led.value(not v.config['led']['active'])
-    if v.relay.value() == v.config['led']['active']:
+    if v.relay.value() == v.config['relay']['active']:
         sleep_ms(v.config['led']['visual_cycle'][1])
         v.led.value(v.config['led']['active'])
         sleep_ms(v.config['led']['visual_cycle'][2])
@@ -125,12 +125,12 @@ def mqtt_callback(topic, msg):
 
 
 def perform_actions():
-    if 'action' in v.incoming.msg:
-        if v.incoming.msg['action'] == 'on':
+    if 'action' in v.incoming:
+        if v.incoming['action'] == 'on':
             v.relay.value(v.config['relay']['active'])
-        elif v.incoming.msg['action'] == 'off':
+        elif v.incoming['action'] == 'off':
             v.relay.value(not v.config['relay']['active'])
-        elif v.incoming.msg['action'] == 'exit':
+        elif v.incoming['action'] == 'exit':
             perform_shutdown()
             return False
         publish_relay_state()
