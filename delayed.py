@@ -6,8 +6,8 @@ import variables as v
 
 def interrupt_handlers():
     v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
-    v.timer.init(mode=Timer.PERIODIC, period=v.timer_period, callback=timer_interrupt)
-    # v.mqtt
+    v.timer.init(mode=Timer.PERIODIC, period=v.led_period, callback=led_interrupt)
+    v.mqtt.init(mode=Timer.PERIODIC, period=v.mqtt_period, callback=mqtt_interrupt)
 
 
 def button_interrupt_startup(button):
@@ -27,7 +27,7 @@ def button_interrupt_falling(button):
     button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
 
 
-def timer_interrupt(cls):
+def led_interrupt(cls):
     v.led.value(v.led_active)
     sleep_ms(v.led_visual_cycle[0])
     v.led.value(not v.led_active)
@@ -36,6 +36,11 @@ def timer_interrupt(cls):
         v.led.value(v.led_active)
         sleep_ms(v.led_visual_cycle[2])
         v.led.value(not v.led_active)
+
+
+def mqtt_interrupt(cls):
+    print('mqtt_interrupt', str(cls))
+    pass
 
 
 def toggle_relay():
