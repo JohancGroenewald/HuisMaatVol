@@ -24,14 +24,12 @@ def interrupt_handlers():
 
 
 def button_interrupt_rising(button):
-    print(button, 'button_interrupt_rising')
     global button_start
     button_start = ticks_ms()
     button.irq(button_interrupt_falling, Pin.IRQ_FALLING)
 
 
 def button_interrupt_falling(button):
-    print(button, 'button_interrupt_falling')
     global button_start
     if button_start and ticks_diff(ticks_ms(), button_start) >= button_delay:
         led.value(not led.value())
