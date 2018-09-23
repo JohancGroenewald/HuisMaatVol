@@ -87,7 +87,7 @@ def publish(message):
     v.mqtt.publish(v.config['mqtt']['topic'], dumps(message))
 
 
-def connect_mqtt():
+def connect_mqtt(argument):
     from umqtt_simple import MQTTClient
     v.mqtt = MQTTClient(
         client_id=v.device_id,
