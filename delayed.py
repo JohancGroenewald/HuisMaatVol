@@ -54,14 +54,14 @@ def button_interrupt_falling(button):
 
 
 def led_interrupt(timer):
-    v.led.value(v.led_active)
+    v.led.value(v.config['led']['active'])
     sleep_ms(v.config['led']['visual_cycle'][0])
-    v.led.value(not v.led_active)
-    if v.relay.value() == v.relay_active:
+    v.led.value(not v.config['led']['active'])
+    if v.relay.value() == v.config['led']['active']:
         sleep_ms(v.config['led']['visual_cycle'][1])
-        v.led.value(v.led_active)
+        v.led.value(v.config['led']['active'])
         sleep_ms(v.config['led']['visual_cycle'][2])
-        v.led.value(not v.led_active)
+        v.led.value(not v.config['led']['active'])
 
 
 def mqtt_interrupt(timer):
@@ -80,7 +80,11 @@ def mqtt_interrupt(timer):
 def toggle_relay():
     v.relay.value(not v.relay.value())
     from micropython import schedule
-    schedule(mqtt_publish, {'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
+    schedule(publish_relay_state, None)
+
+
+def publish_relay_state(argument=None):
+    mqtt_publish({'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
 
 
 def mqtt_publish(message):
@@ -94,6 +98,9 @@ def mqtt_publish(message):
 
 def mqtt_incoming(argument):
     v.mqtt.check_msg()
+    if v.incoming is not None:
+        if perform_actions() is False:
+            return
     init_mqtt_irq()
 
 
@@ -113,5 +120,32 @@ def mqtt_connect(argument):
 
 
 def mqtt_callback(topic, msg):
-    print(topic, msg)
-    pass
+    from json import loads
+    v.incoming = loads(msg)
+
+
+def perform_actions():
+    if 'action' in v.incoming.msg:
+        if v.incoming.msg['action'] == 'on':
+            v.relay.value(v.config['relay']['active'])
+        elif v.incoming.msg['action'] == 'off':
+            v.relay.value(not v.config['relay']['active'])
+        elif v.incoming.msg['action'] == 'exit':
+            perform_shutdown()
+            return False
+        publish_relay_state()
+    v.incoming = None
+    return True
+
+
+def perform_shutdown():
+    v.button.irq(handler=None)
+    v.mqtt_irq.deinit()
+    v.led_irq.deinit()
+    v.led.value(not v.config['led']['active'])
+    v.relay.value(not v.config['relay']['active'])
+    v.led_irq, v.mqtt_irq = None, None
+    v.button, v.led, v.relay, v.wifi, v.mqtt = None, None, None, None, None
+    from gc import collect
+    collect()
+    print('Perform shutdown completed')

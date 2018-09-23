@@ -8,8 +8,5 @@ def startup(config):
     v.led = Pin(config['led']['pin'], Pin.OUT)
     v.relay = Pin(config['relay']['pin'], Pin.OUT)
 
-    v.led_active = config['led']['active']
-    v.led.value(not v.led_active)
-
-    v.relay_active = config['relay']['active']
-    v.relay.value(v.relay_active)
+    v.led.value(not config['led']['active'])
+    v.relay.value(config['relay']['active'])
