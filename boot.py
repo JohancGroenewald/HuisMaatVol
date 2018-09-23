@@ -1,7 +1,7 @@
 # This code will be specific to the ESP8266, ESP8285 and ESP32
 # Hopefully I can find a way to identify the type of SOC at boot time.
 # This start-up code is for the sake of responsiveness.
-from responsive import startup, interrupt_handlers
+from responsive import startup
 
 config = {
     'device': 'ESP8266',
@@ -10,6 +10,8 @@ config = {
     'relay': {'pin': 12, 'active': 1}
 }
 startup(config)
+
+from delayed import interrupt_handlers
 interrupt_handlers()
 
 # noinspection PyUnresolvedReferences
