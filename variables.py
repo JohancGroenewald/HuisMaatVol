@@ -1,4 +1,5 @@
-button, led, relay, timer, mqtt = None, None, None, None, None
+button, led, relay, mqtt = None, None, None, None
+led_irq, mqtt_irq = None, None
 button_start = None
 led_active = None
 relay_active = None

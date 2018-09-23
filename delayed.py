@@ -6,11 +6,12 @@ import variables as v
 
 # noinspection PyUnresolvedReferences
 def start_up():
-    v.timer = Timer(1)
-    v.mqtt = Timer(2)
+    v.led_irq = Timer(1)
+    v.mqtt_irq = Timer(2)
+
     v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
-    v.timer.init(mode=Timer.PERIODIC, period=v.led_period, callback=led_interrupt)
-    v.mqtt.init(mode=Timer.PERIODIC, period=v.mqtt_period, callback=mqtt_interrupt)
+    v.led_irq.init(mode=Timer.PERIODIC, period=v.led_period, callback=led_interrupt)
+    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.mqtt_period, callback=mqtt_interrupt)
 
 
 def button_interrupt_startup(button):
@@ -30,7 +31,7 @@ def button_interrupt_falling(button):
     button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
 
 
-def led_interrupt(cls):
+def led_interrupt(timer):
     v.led.value(v.led_active)
     sleep_ms(v.led_visual_cycle[0])
     v.led.value(not v.led_active)
@@ -41,8 +42,8 @@ def led_interrupt(cls):
         v.led.value(not v.led_active)
 
 
-def mqtt_interrupt(cls):
-    print('mqtt_interrupt', str(cls))
+def mqtt_interrupt(timer):
+
     pass
 
 
