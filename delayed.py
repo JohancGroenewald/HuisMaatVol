@@ -70,18 +70,20 @@ def mqtt_interrupt(timer):
     elif v.wifi.isconnected() is True and v.mqtt is None:
         v.mqtt_irq.deinit()
         from micropython import schedule
-        schedule(connect_mqtt, None)
+        schedule(mqtt_connect, None)
     elif v.wifi.isconnected() is True and v.mqtt is not None:
-        v.mqtt.check_msg()
+        v.mqtt_irq.deinit()
+        from micropython import schedule
+        schedule(mqtt_incoming, None)
 
 
 def toggle_relay():
     v.relay.value(not v.relay.value())
     from micropython import schedule
-    schedule(publish, {'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
+    schedule(mqtt_publish, {'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
 
 
-def publish(message):
+def mqtt_publish(message):
     if v.wifi.isconnected() is False or v.mqtt is None:
         return
     message['device_id'] = v.device_id
@@ -90,7 +92,12 @@ def publish(message):
     v.mqtt.publish(v.config['mqtt']['topic'], dumps(message))
 
 
-def connect_mqtt(argument):
+def mqtt_incoming(argument):
+    v.mqtt.check_msg()
+    init_mqtt_irq()
+
+
+def mqtt_connect(argument):
     from umqtt_simple import MQTTClient
     v.mqtt = MQTTClient(
         client_id=v.device_id,
@@ -98,7 +105,7 @@ def connect_mqtt(argument):
         port=v.config['mqtt']['port']
     )
     v.mqtt.connect()
-    publish({'state': 'connected', 'action': 'on'})
+    mqtt_publish({'state': 'connected', 'action': 'on'})
     if v.config['mqtt']['subscribe']:
         v.mqtt.set_callback(mqtt_callback)
         v.mqtt.subscribe(v.device_id)
