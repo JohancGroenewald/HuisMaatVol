@@ -15,21 +15,6 @@ def start_up(config):
     from ubinascii import hexlify                                                                     #
     v.device_id = hexlify(v.wifi.config('mac'),':').decode().upper()                                  #
     # #################################################################################################
-
-    # #################################################################################################
-    if v.wifi.isconnected():
-        from umqtt_simple import MQTTClient
-        v.mqtt = MQTTClient(
-            client_id=v.device_id,
-            server=v.config['mqtt']['ip'],
-            port=v.config['mqtt']['port']
-        )
-        v.mqtt.connect()
-        self.publish({'state': 'connected'})
-        # if config['mqtt']['subscribe']:
-        #     self.mqtt.set_callback(self.callback)
-        #     self.mqtt.subscribe(self.device_id)#
-    # #################################################################################################
     v.led_irq = Timer(v.config['led']['timer'])                                                       #
     v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                     #
     # #################################################################################################
@@ -68,8 +53,26 @@ def led_interrupt(timer):
 
 
 def mqtt_interrupt(timer):
-
-    pass
+    if v.wifi.isconnected() is False:
+        pass
+    elif v.wifi.isconnected() is True and v.mqtt is None:
+        from machine import disable_irq, enable_irq
+        irq_state = disable_irq()
+        from umqtt_simple import MQTTClient
+        v.mqtt = MQTTClient(
+            client_id=v.device_id,
+            server=v.config['mqtt']['ip'],
+            port=v.config['mqtt']['port']
+        )
+        v.mqtt.connect()
+        publish({'state': 'connected'})
+        # if config['mqtt']['subscribe']:
+        #     self.mqtt.set_callback(self.callback)
+        #     self.mqtt.subscribe(self.device_id)#
+        enable_irq(irq_state)
+    elif v.wifi.isconnected() is True and v.mqtt is not None:
+        # listen for messages
+        pass
 
 
 def toggle_relay():
