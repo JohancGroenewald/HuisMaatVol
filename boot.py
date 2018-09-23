@@ -2,16 +2,18 @@
 # Hopefully I can find a way to identify the type of SOC at boot time.
 # This start-up code is for the sake of responsiveness.
 try:
-    from responsive import startup as responsive_startup
-    config = {
-        'device': 'ESP8266',
-        'button': {'pin': 0, 'active': 0},
-        'led': {'pin': 13, 'active': 0},
-        'relay': {'pin': 12, 'active': 1}
-    }
-    responsive_startup(config)
-    from delayed import start_up as delayed_start_up
-    delayed_start_up()
+    # #####################################################
+    from responsive import startup as responsive_startup  #
+    from config import config as config_public
+    responsive_startup(config_public)                     #
+    # #####################################################
+    from delayed import start_up as delayed_start_up      #
+    from config_local import config as config_local
+    config_public.update(config_local)
+    delayed_start_up(config_public)                       #
+    # #####################################################
+    from gc import collect
+    collect()
 except Exception as e:
     import sys
     # noinspection PyUnresolvedReferences

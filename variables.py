@@ -1,10 +1,8 @@
-button, led, relay, mqtt = None, None, None, None
+button, led, relay, wifi, mqtt = None, None, None, None, None
 led_irq, mqtt_irq = None, None
 button_start = None
 led_active = None
 relay_active = None
+device_id = None
 
-button_delay = 800
-led_period = 3000
-led_visual_cycle = [25, 50, 25]
-mqtt_period = 5000
+config = None
