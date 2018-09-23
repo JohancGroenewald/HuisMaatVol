@@ -72,8 +72,7 @@ def mqtt_interrupt(timer):
         from micropython import schedule
         schedule(connect_mqtt, None)
     elif v.wifi.isconnected() is True and v.mqtt is not None:
-        # listen for messages
-        pass
+        v.mqtt.check_msg()
 
 
 def toggle_relay():
