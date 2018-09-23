@@ -50,7 +50,7 @@ def button_interrupt_rising(button):
 
 
 def button_interrupt_falling(button):
-    if v.button_start and ticks_diff(ticks_ms(), v.button_start) >= v.config['button']['delay']:
+    if v.button_start and ticks_diff(ticks_ms(), v.button_start) >= v.config['button']['debounce']:
         toggle_relay()
     v.button_start = None
     button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
