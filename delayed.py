@@ -139,6 +139,7 @@ def perform_actions():
 
 
 def perform_shutdown():
+    mqtt_publish({'state': 'disconnected'})
     v.button.irq(handler=None)
     v.mqtt_irq.deinit()
     v.led_irq.deinit()
