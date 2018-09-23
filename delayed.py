@@ -25,7 +25,7 @@ def start_up(config):
 
 
 def init_mqtt_irq():
-    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)  #
+    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)
 
 
 def init_button_irq_rising():
@@ -78,9 +78,13 @@ def mqtt_interrupt(timer):
 
 def toggle_relay():
     v.relay.value(not v.relay.value())
+    from micropython import schedule
+    schedule(publish, {'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
 
 
 def publish(message):
+    if v.wifi.isconnected() is False or v.mqtt is None:
+        return
     message['device_id'] = v.device_id
     message['device_type'] = v.config['device']['type']
     from json import dumps
@@ -95,8 +99,13 @@ def connect_mqtt(argument):
         port=v.config['mqtt']['port']
     )
     v.mqtt.connect()
-    publish({'state': 'connected'})
-    # if config['mqtt']['subscribe']:
-    #     self.mqtt.set_callback(self.callback)
-    #     self.mqtt.subscribe(self.device_id)#
+    publish({'state': 'connected', 'action': 'on'})
+    if v.config['mqtt']['subscribe']:
+        v.mqtt.set_callback(mqtt_callback)
+        v.mqtt.subscribe(v.device_id)
     init_mqtt_irq()
+
+
+def mqtt_callback(topic, msg):
+    print(topic, msg)
+    pass
