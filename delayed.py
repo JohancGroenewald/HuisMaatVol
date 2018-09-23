@@ -18,27 +18,39 @@ def start_up(config):
     v.led_irq = Timer(v.config['led']['timer'])                                                       #
     v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                     #
     # #################################################################################################
-    v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)                           #
+    init_button_irq_falling()                                                                         #
     v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led']['period'], callback=led_interrupt)
-    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)  #
+    init_mqtt_irq()                                                                                   #
     # #################################################################################################
+
+
+def init_mqtt_irq():
+    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)  #
+
+
+def init_button_irq_rising():
+    v.button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
+
+
+def init_button_irq_falling():
+    v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
 
 
 def button_interrupt_startup(button):
     toggle_relay()
-    button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
+    init_button_irq_rising()
 
 
 def button_interrupt_rising(button):
     v.button_start = ticks_ms()
-    button.irq(handler=button_interrupt_falling, trigger=Pin.IRQ_FALLING)
+    init_button_irq_falling()
 
 
 def button_interrupt_falling(button):
     if v.button_start and ticks_diff(ticks_ms(), v.button_start) >= v.config['button']['debounce']:
         toggle_relay()
     v.button_start = None
-    button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
+    init_button_irq_rising()
 
 
 def led_interrupt(timer):
@@ -56,20 +68,9 @@ def mqtt_interrupt(timer):
     if v.wifi.isconnected() is False:
         pass
     elif v.wifi.isconnected() is True and v.mqtt is None:
-        from machine import disable_irq, enable_irq
-        irq_state = disable_irq()
-        from umqtt_simple import MQTTClient
-        v.mqtt = MQTTClient(
-            client_id=v.device_id,
-            server=v.config['mqtt']['ip'],
-            port=v.config['mqtt']['port']
-        )
-        v.mqtt.connect()
-        publish({'state': 'connected'})
-        # if config['mqtt']['subscribe']:
-        #     self.mqtt.set_callback(self.callback)
-        #     self.mqtt.subscribe(self.device_id)#
-        enable_irq(irq_state)
+        v.mqtt_irq.deinit()
+        from micropython import schedule
+        schedule(connect_mqtt, None)
     elif v.wifi.isconnected() is True and v.mqtt is not None:
         # listen for messages
         pass
@@ -84,3 +85,18 @@ def publish(message):
     message['device_type'] = v.config['device']['type']
     from json import dumps
     v.mqtt.publish(v.config['mqtt']['topic'], dumps(message))
+
+
+def connect_mqtt():
+    from umqtt_simple import MQTTClient
+    v.mqtt = MQTTClient(
+        client_id=v.device_id,
+        server=v.config['mqtt']['ip'],
+        port=v.config['mqtt']['port']
+    )
+    v.mqtt.connect()
+    publish({'state': 'connected'})
+    # if config['mqtt']['subscribe']:
+    #     self.mqtt.set_callback(self.callback)
+    #     self.mqtt.subscribe(self.device_id)#
+    init_mqtt_irq()
