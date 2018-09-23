@@ -4,7 +4,10 @@ from machine import Pin, Timer
 import variables as v
 
 
-def interrupt_handlers():
+# noinspection PyUnresolvedReferences
+def start_up():
+    v.timer = Timer(1)
+    v.mqtt = Timer(2)
     v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
     v.timer.init(mode=Timer.PERIODIC, period=v.led_period, callback=led_interrupt)
     v.mqtt.init(mode=Timer.PERIODIC, period=v.mqtt_period, callback=mqtt_interrupt)
