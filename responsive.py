@@ -4,7 +4,7 @@ from machine import Pin, Timer
 
 button, led, relay, timer = None, None, None, None
 button_start = None
-button_delay = 450
+button_delay = 800
 led_active = None
 relay_active = None
 timer_period = 3000
@@ -29,23 +29,25 @@ def startup(config):
 
 
 def interrupt_handlers():
-    button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
+    button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
     timer.init(mode=Timer.PERIODIC, period=timer_period, callback=timer_interrupt)
+
+
+def button_interrupt_startup(button):
+    toggle_relay()
+    button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
 
 
 def button_interrupt_rising(button):
     global button_start
-    print('button_interrupt_rising')
     button_start = ticks_ms()
     button.irq(handler=button_interrupt_falling, trigger=Pin.IRQ_FALLING)
 
 
 def button_interrupt_falling(button):
-    print('button_interrupt_falling, button_start: {}'.format(button_start))
     global button_start
     if button_start and ticks_diff(ticks_ms(), button_start) >= button_delay:
-        relay.value(not relay.value())
-        print('relay.value: {}'.format(relay.value()))
+        toggle_relay()
     button_start = None
     button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
 
@@ -59,3 +61,8 @@ def timer_interrupt(cls):
         led.value(led_active)
         sleep_ms(led_visual_cycle[2])
         led.value(not led_active)
+
+
+def toggle_relay():
+    relay.value(not relay.value())
+    print('relay in now {}'.format('on' if relay.value() == relay_active else 'off'))
