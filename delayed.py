@@ -1,17 +1,13 @@
 # noinspection PyUnresolvedReferences
 from time import ticks_ms, ticks_diff, sleep_ms
-from machine import Timer
-from variables import (
-    button, led, relay, timer, mqtt,
-    led_active, relay_active,
-    led_visual_cycle
-)
+from machine import Pin, Timer
+import variables as v
 
 
 def interrupt_handlers():
-    button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
-    timer.init(mode=Timer.PERIODIC, period=timer_period, callback=timer_interrupt)
-    # mqtt
+    v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
+    v.timer.init(mode=Timer.PERIODIC, period=v.timer_period, callback=timer_interrupt)
+    # v.mqtt
 
 
 def button_interrupt_startup(button):
@@ -20,30 +16,27 @@ def button_interrupt_startup(button):
 
 
 def button_interrupt_rising(button):
-    global button_start
-    button_start = ticks_ms()
+    v.button_start = ticks_ms()
     button.irq(handler=button_interrupt_falling, trigger=Pin.IRQ_FALLING)
 
 
 def button_interrupt_falling(button):
-    global button_start
-    if button_start and ticks_diff(ticks_ms(), button_start) >= button_delay:
+    if v.button_start and ticks_diff(ticks_ms(), v.button_start) >= v.button_delay:
         toggle_relay()
-    button_start = None
+    v.button_start = None
     button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
 
 
 def timer_interrupt(cls):
-    led.value(led_active)
-    sleep_ms(led_visual_cycle[0])
-    led.value(not led_active)
-    if relay.value() == relay_active:
-        sleep_ms(led_visual_cycle[1])
-        led.value(led_active)
-        sleep_ms(led_visual_cycle[2])
-        led.value(not led_active)
+    v.led.value(v.led_active)
+    sleep_ms(v.led_visual_cycle[0])
+    v.led.value(not v.led_active)
+    if v.relay.value() == v.relay_active:
+        sleep_ms(v.led_visual_cycle[1])
+        v.led.value(v.led_active)
+        sleep_ms(v.led_visual_cycle[2])
+        v.led.value(not v.led_active)
 
 
 def toggle_relay():
-    relay.value(not relay.value())
-    print('relay in now {}'.format('on' if relay.value() == relay_active else 'off'))
+    v.relay.value(not v.relay.value())

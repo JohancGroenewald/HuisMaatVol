@@ -65,4 +65,5 @@ fabric.properties
 venv/
 venvp/
 documentation/
+Argief/
 config_local.py

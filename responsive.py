@@ -1,24 +1,17 @@
 # noinspection PyUnresolvedReferences
 from machine import Pin, Timer
-from variables import (
-    button, led, relay, timer, mqtt, led_active, relay_active
-)
+import variables as v
 
 
 def startup(config):
-    global button, led, relay, timer, mqtt
-    global led_active, relay_active
-    try:
-        button = Pin(config['button']['pin'], Pin.IN)
-        led = Pin(config['led']['pin'], Pin.OUT)
-        relay = Pin(config['relay']['pin'], Pin.OUT)
-        timer = Timer(1)
-        mqtt = Timer(2)
+    v.button = Pin(config['button']['pin'], Pin.IN)
+    v.led = Pin(config['led']['pin'], Pin.OUT)
+    v.relay = Pin(config['relay']['pin'], Pin.OUT)
+    v.timer = Timer(1)
+    v.mqtt = Timer(2)
 
-        led_active = config['led']['active']
-        led.value(not led_active)
+    v.led_active = config['led']['active']
+    v.led.value(not v.led_active)
 
-        relay_active = config['relay']['active']
-        relay.value(relay_active)
-    except:
-        button, led, relay, timer, mqtt = None, None, None, None, None
+    v.relay_active = config['relay']['active']
+    v.relay.value(v.relay_active)
