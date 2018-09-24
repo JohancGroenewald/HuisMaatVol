@@ -8,9 +8,9 @@ def startup(config):
     for id, setup in config['button'].items():      #
         v.button[id] = Pin(setup['pin'], Pin.IN)
         v.button_start.append(None)
-    for id, setup in config['led'].keys():
+    for id, setup in config['led'].items():
         v.led[id] = Pin(setup['pin'], Pin.OUT)
-    for id, setup in config['relay'].keys():
+    for id, setup in config['relay'].items():
         v.relay[id] = Pin(setup['pin'], Pin.OUT)    #
     # ###############################################
     for id, led in v.led.items():                   #
