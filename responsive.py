@@ -4,17 +4,17 @@ import variables as v
 
 
 def startup(config):
-    for id in config['button'].keys():
-        setup = config['button'][id]
-        v.button[id] = (Pin(setup['pin'], Pin.IN), setup['active'])
-    for id in config['led'].keys():
-        setup = config['led'][id]
-        v.led[id] = (Pin(setup['pin'], Pin.OUT), setup['active'])
-    for id in config['relay'].keys():
-        setup = config['relay'][id]
-        v.relay[id] = (Pin(setup['pin'], Pin.OUT), setup['active'])
-
-    for id, (led, active) in v.led.items():
-        led.value(not active)
-    for id, (relay, active) in v.relay.items():
-        relay.value(active)
+    # ###############################################
+    for id, setup in config['button'].items():      #
+        v.button[id] = Pin(setup['pin'], Pin.IN)
+        v.button_start.append(None)
+    for id, setup in config['led'].keys():
+        v.led[id] = Pin(setup['pin'], Pin.OUT)
+    for id, setup in config['relay'].keys():
+        v.relay[id] = Pin(setup['pin'], Pin.OUT)    #
+    # ###############################################
+    for id, led in v.led.items():                   #
+        led.value(not config['led'][id]['active'])
+    for id, relay in v.relay.items():
+        relay.value(config['relay'][id]['active'])  #
+    # ###############################################

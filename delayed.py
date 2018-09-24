@@ -8,60 +8,93 @@ import variables as v
 # noinspection PyUnresolvedReferences
 def start_up(config):
     v.config = config
-    # #################################################################################################
-    from network import WLAN, STA_IF                                                                  #
-    v.wifi = WLAN(STA_IF)                                                                             #
-    # #################################################################################################
-    from ubinascii import hexlify                                                                     #
-    v.device_id = hexlify(v.wifi.config('mac'),':').decode().upper()                                  #
-    # #################################################################################################
-    v.led_irq = Timer(v.config['led']['timer'])                                                       #
-    v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                     #
-    # #################################################################################################
-    init_button_irq_falling()                                                                         #
-    v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led']['period'], callback=led_interrupt)
-    init_mqtt_irq()                                                                                   #
-    # #################################################################################################
+    # ###################################################################################################
+    from network import WLAN, STA_IF                                                                    #
+    v.wifi = WLAN(STA_IF)                                                                               #
+    # ###################################################################################################
+    from ubinascii import hexlify                                                                       #
+    v.device_id = hexlify(v.wifi.config('mac'), ':').decode().upper()                                   #
+    # ###################################################################################################
+    v.led_irq = Timer(v.config['led_irq']['timer'])                                                     #
+    v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led_irq']['period'], callback=led_interrupt)   #
+    # ###################################################################################################
+    for button in v.button.values():                                                                    #
+        init_button_irq_trigger(button)                                                                 #
+    # ###################################################################################################
+    # v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                     #
+    # init_mqtt_irq()                                                                                   #
+    # # #################################################################################################
 
 
-def init_mqtt_irq():
-    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)
+def init_button_irq_trigger(button):
+    for id, _button in v.button.items():
+        if button is _button:
+            v.button_start[id] = None
+            if v.config['button'][id]['active'] == 1:
+                button.irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_RISING)
+            else:
+                button.irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_FALLING)
+            break
 
 
-def init_button_irq_rising():
-    v.button.irq(handler=button_interrupt_rising, trigger=Pin.IRQ_RISING)
+def init_button_irq_debounce(button):
+    for id, _button in v.button.items():
+        if button is _button:
+            v.button_start[id] = ticks_ms
+            if v.config['button'][id]['active'] == 1:
+                button.irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_FALLING)
+            else:
+                button.irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_RISING)
+            break
 
 
-def init_button_irq_falling():
-    v.button.irq(handler=button_interrupt_startup, trigger=Pin.IRQ_FALLING)
+def button_interrupt_triggered(button):
+    init_button_irq_debounce(button)
 
 
-def button_interrupt_startup(button):
-    toggle_relay()
-    init_button_irq_rising()
+def button_interrupt_debounce(button):
+    for id, _button in v.button.items():
+        if button is _button:
+            if v.button_start[id] and ticks_diff(ticks_ms(), v.button_start[id]) >= v.config['button'][id]['debounce']:
+                toggle_relay(v.config['button'][id]['relay'])
+    init_button_irq_trigger(button)
 
 
-def button_interrupt_rising(button):
-    v.button_start = ticks_ms()
-    init_button_irq_falling()
-
-
-def button_interrupt_falling(button):
-    if v.button_start and ticks_diff(ticks_ms(), v.button_start) >= v.config['button']['debounce']:
-        toggle_relay()
-    v.button_start = None
-    init_button_irq_rising()
+def toggle_relay(relays):
+    for relay in relays:
+        v.relay[relay].value(not v.relay.value())
+    from micropython import schedule
+    schedule(publish_relay_state, None)
 
 
 def led_interrupt(timer):
-    v.led.value(v.config['led']['active'])
-    sleep_ms(v.config['led']['visual_cycle'][0])
-    v.led.value(not v.config['led']['active'])
-    if v.relay.value() == v.config['relay']['active']:
-        sleep_ms(v.config['led']['visual_cycle'][1])
-        v.led.value(v.config['led']['active'])
-        sleep_ms(v.config['led']['visual_cycle'][2])
-        v.led.value(not v.config['led']['active'])
+    from micropython import schedule
+    schedule(led_relay_status, None)
+
+
+def led_relay_status(argument=None):
+    for id, led in v.led.items():
+        if v.config['led'][id]['relay'] is None:
+            continue
+        led.value(v.config['led'][id]['active'])
+    sleep_ms(v.config['led_irq']['visual_cycle'][0])
+    for id, led in v.led.items():
+        if v.config['led'][id]['relay'] is None:
+            continue
+        led.value(not led.value())
+    sleep_ms(v.config['led_irq']['visual_cycle'][1])
+    for id, led in v.led.items():
+        if v.config['led'][id]['relay'] is None:
+            continue
+        for relay in v.config['led'][id]['relay']:
+            if v.relay[relay].value() == v.config['relay'][relay]['active']:
+                led.value(not led.value())
+                continue
+    sleep_ms(v.config['led_irq']['visual_cycle'][2])
+    for id, led in v.led.items():
+        if v.config['led'][id]['relay'] is None:
+            continue
+        led.value(not v.config['led'][id]['active'])
 
 
 def mqtt_interrupt(timer):
@@ -77,14 +110,12 @@ def mqtt_interrupt(timer):
         schedule(mqtt_incoming, None)
 
 
-def toggle_relay():
-    v.relay.value(not v.relay.value())
-    from micropython import schedule
-    schedule(publish_relay_state, None)
-
-
 def publish_relay_state(argument=None):
     mqtt_publish({'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
+
+
+def init_mqtt_irq():
+    v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)
 
 
 def mqtt_publish(message):
