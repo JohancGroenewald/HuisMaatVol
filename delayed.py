@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from time import ticks_ms, ticks_diff, sleep_ms
-from machine import Pin, Timer
+from machine import Timer
 
 import variables as v
 
@@ -19,46 +19,25 @@ def start_up(config):
     v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led_irq']['period'], callback=led_interrupt)   #
     # ###################################################################################################
     for button in v.button.values():                                                                    #
-        init_button_irq_trigger(button)                                                                 #
+        button.enable(button_triggered)                                                                 #
     # ###################################################################################################
     v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                       #
     init_mqtt_irq()                                                                                     #
-    # # #################################################################################################
+    # ###################################################################################################
 
 
-def init_button_irq_trigger(button):
-    for id, _button in v.button.items():
-        if button is _button:
-            v.button_start[id] = None
-            if v.config['button'][id]['active'] == 1:
-                v.button[id].irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_RISING)
-            else:
-                v.button[id].irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_FALLING)
-            break
+def button_triggered(pin):
+    gpio = int(str(pin)[4:-1])
+    for button in v.button.values():
+        if button.gpio == gpio:
+            print('{} :: {}'.format(button, pin), end='')
+            button.debounce(v.config['button'][button.key]['debounce'], button_debounced)
 
 
-def init_button_irq_debounce(button):
-    for id, _button in v.button.items():
-        if button is _button:
-            v.button_start[id] = ticks_ms
-            if v.config['button'][id]['active'] == 1:
-                v.button[id].irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_FALLING)
-            else:
-                v.button[id].irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_RISING)
-            break
-
-
-def button_interrupt_triggered(button):
-    init_button_irq_debounce(button)
-
-
-def button_interrupt_debounce(button):
-    for id, _button in v.button.items():
-        if button is _button:
-            if v.button_start[id] and ticks_diff(ticks_ms(), v.button_start[id]) >= v.config['button'][id]['debounce']:
-                toggle_relay(v.config['button'][id]['relay'])
-            break
-    init_button_irq_trigger(button)
+def button_debounced(timer):
+    print(' <-> {}'.format(timer))
+    for button in v.button.values():
+        print('id(Timer): {}'.format(hex(id(button.timer))))
 
 
 def toggle_relay(relays):
