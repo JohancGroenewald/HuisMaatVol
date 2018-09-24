@@ -29,6 +29,7 @@ def start_up(config):
 def init_button_irq_trigger(button):
     for id, _button in v.button.items():
         if button is _button:
+            print('A Found button: {}'.format(button))
             v.button_start[id] = None
             if v.config['button'][id]['active'] == 1:
                 button.irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_RISING)
@@ -40,6 +41,7 @@ def init_button_irq_trigger(button):
 def init_button_irq_debounce(button):
     for id, _button in v.button.items():
         if button is _button:
+            print('B Found button: {}'.format(button))
             v.button_start[id] = ticks_ms
             if v.config['button'][id]['active'] == 1:
                 button.irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_FALLING)
@@ -62,9 +64,9 @@ def button_interrupt_debounce(button):
 
 def toggle_relay(relays):
     for relay in relays:
-        v.relay[relay].value(not v.relay.value())
+        v.relay[relay].value(not v.relay[relay].value())
     from micropython import schedule
-    schedule(publish_relay_state, None)
+    schedule(publish_relay_state, relays)
 
 
 def led_interrupt(timer):
@@ -110,8 +112,12 @@ def mqtt_interrupt(timer):
         schedule(mqtt_incoming, None)
 
 
-def publish_relay_state(argument=None):
-    mqtt_publish({'action': 'on' if v.relay.value() == v.config['relay']['active'] else 'off'})
+def publish_relay_state(relays):
+    message = {
+        'relay.{}'.format(relay): 'on' if v.relay.value() == v.config['relay']['active'] else 'off'
+        for relay in relays
+    }
+    mqtt_publish(message)
 
 
 def init_mqtt_irq():
