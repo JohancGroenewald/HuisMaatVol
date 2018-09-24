@@ -147,6 +147,7 @@ def perform_shutdown():
     v.relay.value(not v.config['relay']['active'])
     v.led_irq, v.mqtt_irq = None, None
     v.button, v.led, v.relay, v.wifi, v.mqtt = None, None, None, None, None
+    # noinspection PyUnresolvedReferences
+    import unload
     from gc import collect
     collect()
-    print('Perform shutdown completed')
