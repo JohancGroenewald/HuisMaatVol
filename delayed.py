@@ -31,9 +31,9 @@ def init_button_irq_trigger(button):
         if button is _button:
             v.button_start[id] = None
             if v.config['button'][id]['active'] == 1:
-                button.irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_RISING)
+                v.button[id].irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_RISING)
             else:
-                button.irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_FALLING)
+                v.button[id].irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_FALLING)
             break
 
 
@@ -42,9 +42,9 @@ def init_button_irq_debounce(button):
         if button is _button:
             v.button_start[id] = ticks_ms
             if v.config['button'][id]['active'] == 1:
-                button.irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_FALLING)
+                v.button[id].irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_FALLING)
             else:
-                button.irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_RISING)
+                v.button[id].irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_RISING)
             break
 
 
@@ -57,6 +57,7 @@ def button_interrupt_debounce(button):
         if button is _button:
             if v.button_start[id] and ticks_diff(ticks_ms(), v.button_start[id]) >= v.config['button'][id]['debounce']:
                 toggle_relay(v.config['button'][id]['relay'])
+            break
     init_button_irq_trigger(button)
 
 
