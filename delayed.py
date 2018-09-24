@@ -21,15 +21,14 @@ def start_up(config):
     for button in v.button.values():                                                                    #
         init_button_irq_trigger(button)                                                                 #
     # ###################################################################################################
-    # v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                     #
-    # init_mqtt_irq()                                                                                   #
+    v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                       #
+    init_mqtt_irq()                                                                                     #
     # # #################################################################################################
 
 
 def init_button_irq_trigger(button):
     for id, _button in v.button.items():
         if button is _button:
-            print('A Found button: {}'.format(button))
             v.button_start[id] = None
             if v.config['button'][id]['active'] == 1:
                 button.irq(handler=button_interrupt_triggered, trigger=Pin.IRQ_RISING)
@@ -41,7 +40,6 @@ def init_button_irq_trigger(button):
 def init_button_irq_debounce(button):
     for id, _button in v.button.items():
         if button is _button:
-            print('B Found button: {}'.format(button))
             v.button_start[id] = ticks_ms
             if v.config['button'][id]['active'] == 1:
                 button.irq(handler=button_interrupt_debounce, trigger=Pin.IRQ_FALLING)
@@ -114,8 +112,8 @@ def mqtt_interrupt(timer):
 
 def publish_relay_state(relays):
     message = {
-        'relay.{}'.format(relay): 'on' if v.relay.value() == v.config['relay']['active'] else 'off'
-        for relay in relays
+        'relay.{}'.format(id): 'on' if v.relay[id].value() == v.config['relay'][id]['active'] else 'off'
+        for id in relays
     }
     mqtt_publish(message)
 
