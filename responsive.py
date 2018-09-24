@@ -4,9 +4,17 @@ import variables as v
 
 
 def startup(config):
-    v.button = Pin(config['button']['pin'], Pin.IN)
-    v.led = Pin(config['led']['pin'], Pin.OUT)
-    v.relay = Pin(config['relay']['pin'], Pin.OUT)
+    for id, setup in config['button']:
+        v.button[id] = Pin(setup['pin'], Pin.IN)
+    for id, setup in config['led']:
+        v.led[id] = Pin(setup['pin'], Pin.OUT)
+    for id, setup in config['relay']:
+        v.relay[id] = Pin(setup['pin'], Pin.OUT)
 
-    v.led.value(not config['led']['active'])
-    v.relay.value(config['relay']['active'])
+    for id, led in v.led.items():
+        active = config['led'][id]['active']
+        led.value(not active)
+
+    for id, relay in v.relay.items():
+        active = config['relay'][id]['active']
+        relay.value(active)
