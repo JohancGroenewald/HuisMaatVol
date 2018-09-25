@@ -15,6 +15,11 @@ def start_up(config):
     from ubinascii import hexlify                                                                       #
     v.device_id = hexlify(v.wifi.config('mac'), ':').decode().upper()                                   #
     # ###################################################################################################
+    from umqtt_simple import MQTTClient                                                                 #
+    v.mqtt = MQTTClient(
+        client_id=v.device_id, server=v.config['mqtt']['ip'], port=v.config['mqtt']['port']
+    )                                                                                                   #
+    # ###################################################################################################
     v.led_irq = Timer(v.config['led_irq']['timer'])                                                     #
     v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led_irq']['period'], callback=led_interrupt)   #
     # ###################################################################################################
@@ -35,7 +40,7 @@ def button_triggered(pin):
 
 
 def button_debounced(timer):
-    print(' <-> {}'.format(timer))
+    print(' <-> {}, {}'.format(timer, timer.period))
     for button in v.button.values():
         print('id(Timer): {}'.format(hex(id(button.timer))))
 
@@ -80,11 +85,11 @@ def led_relay_status(argument=None):
 def mqtt_interrupt(timer):
     if v.wifi.isconnected() is False:
         pass
-    elif v.wifi.isconnected() is True and v.mqtt is None:
+    elif v.wifi.isconnected() is True and not v.mqtt.connected():
         v.mqtt_irq.deinit()
         from micropython import schedule
         schedule(mqtt_connect, None)
-    elif v.wifi.isconnected() is True and v.mqtt is not None:
+    elif v.wifi.isconnected() is True and v.mqtt.connected():
         v.mqtt_irq.deinit()
         from micropython import schedule
         schedule(mqtt_incoming, None)
@@ -120,12 +125,6 @@ def mqtt_incoming(argument):
 
 
 def mqtt_connect(argument):
-    from umqtt_simple import MQTTClient
-    v.mqtt = MQTTClient(
-        client_id=v.device_id,
-        server=v.config['mqtt']['ip'],
-        port=v.config['mqtt']['port']
-    )
     v.mqtt.connect()
     mqtt_publish({'state': 'connected', 'action': 'on'})
     if v.config['mqtt']['subscribe']:
