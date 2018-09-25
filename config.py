@@ -1,3 +1,7 @@
+#  Timer 3 is reserved for internal use.
+#  Timer 5 controls the servo drive.
+#  Timer 6 is used to signaling ADC / DAC read/write.
+
 SONOFF_BASIC = {
     'device': {
         'type': 'ESP8266EX'

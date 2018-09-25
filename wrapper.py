@@ -1,4 +1,4 @@
-from machine import Pin as MachinePin, Timer
+from machine import Pin as MachinePin
 
 
 # noinspection PyUnresolvedReferences,PyArgumentList
@@ -15,9 +15,6 @@ class PinWrapper(MachinePin):
         self.gpio = id
         self.timer = None
 
-    def __str__(self):
-        return '<PinWrapper({}) with key: {}>'.format(self.gpio, self.key)
-
     def on(self):
         super().value(self.active)
 
@@ -27,7 +24,7 @@ class PinWrapper(MachinePin):
     def toggle(self):
         super().value(not super().value())
 
-    def enable(self, callback):
+    def trigger(self, callback):
         if self.active == 1:
             super().irq(handler=callback, trigger=MachinePin.IRQ_RISING)
         else:
@@ -35,5 +32,6 @@ class PinWrapper(MachinePin):
 
     def debounce(self, period, callback):
         super().irq(handler=None)
+        from machine import Timer
         self.timer = Timer(-1)
         self.timer.init(mode=Timer.ONE_SHOT, period=period, callback=callback)

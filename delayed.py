@@ -1,6 +1,5 @@
 # noinspection PyUnresolvedReferences
 from time import ticks_ms, ticks_diff, sleep_ms
-from machine import Timer
 
 import variables as v
 
@@ -20,11 +19,12 @@ def start_up(config):
         client_id=v.device_id, server=v.config['mqtt']['ip'], port=v.config['mqtt']['port']
     )                                                                                                   #
     # ###################################################################################################
+    from machine import Timer
     v.led_irq = Timer(v.config['led_irq']['timer'])                                                     #
     v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led_irq']['period'], callback=led_interrupt)   #
     # ###################################################################################################
     for button in v.button.values():                                                                    #
-        button.enable(button_triggered)                                                                 #
+        button.trigger(button_triggered)                                                                #
     # ###################################################################################################
     v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                       #
     init_mqtt_irq()                                                                                     #
@@ -35,14 +35,30 @@ def button_triggered(pin):
     gpio = int(str(pin)[4:-1])
     for button in v.button.values():
         if button.gpio == gpio:
-            print('{} :: {}'.format(button, pin), end='')
-            button.debounce(v.config['button'][button.key]['debounce'], button_debounced)
+            button.debounce(
+                v.config['button'][button.key]['debounce'],
+                button_0_debounced if gpio == 1 else
+                button_1_debounced if gpio == 2 else
+                button_2_debounced if gpio == 3 else
+                button_3_debounced
+            )
+            break
 
 
-def button_debounced(timer):
-    print(' <-> {}, {}'.format(timer, timer.period))
-    for button in v.button.values():
-        print('id(Timer): {}'.format(hex(id(button.timer))))
+def button_0_debounced(timer):
+    toggle_relay(v.config['button'][0]['relays'])
+
+
+def button_1_debounced(timer):
+    toggle_relay(v.config['button'][1]['relays'])
+
+
+def button_2_debounced(timer):
+    toggle_relay(v.config['button'][2]['relays'])
+
+
+def button_3_debounced(timer):
+    toggle_relay(v.config['button'][3]['relays'])
 
 
 def toggle_relay(relays):
@@ -104,6 +120,7 @@ def publish_relay_state(relays):
 
 
 def init_mqtt_irq():
+    from machine import Timer
     v.mqtt_irq.init(mode=Timer.PERIODIC, period=v.config['mqtt']['period'], callback=mqtt_interrupt)
 
 
