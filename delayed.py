@@ -31,7 +31,6 @@ def start_up(config):
     # ###################################################################################################
     v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                       #
     init_mqtt_irq()                                                                                     #
-    print('1R')
     # ###################################################################################################
 
 
@@ -80,10 +79,15 @@ def toggle_relay(relays):
 
 def led_interrupt(timer):
     from micropython import schedule
-    schedule(led_relay_status, None)
+    schedule(led_indicator, None)
 
 
-def led_relay_status(argument=None):
+def led_indicator(argument=None):
+    if v.wifi.isconnected() is False or v.mqtt.connected() is False:
+        v.led[0].on()
+        sleep_ms(1000 if v.wifi.isconnected() is False else 500)
+        v.led[0].off()
+        return
     for id, led in v.led.items():
         if v.config['led'][id]['relay'] is None:
             continue
@@ -146,7 +150,6 @@ def mqtt_publish(message):
 def mqtt_incoming(argument):
     v.mqtt.check_msg()
     if v.incoming is not None:
-        print('2R')
         if perform_actions() is False:
             return
     init_mqtt_irq()
@@ -160,17 +163,15 @@ def mqtt_connect(argument):
         v.mqtt.subscribe(v.device_id)
     publish_relay_state(v.relays)
     init_mqtt_irq()
-    print('3R')
 
 
 def mqtt_callback(topic, msg):
     from json import loads
     v.incoming = loads(msg)
-    print('4R')
 
 
 def perform_actions():
-    print(v.incoming)
+    v.led[0].on()
     if 'action' in v.incoming:
         if 'on' in v.incoming['action']:
             for key in v.incoming['action']['on']:
@@ -179,28 +180,33 @@ def perform_actions():
             for key in v.incoming['action']['off']:
                 v.relay[key].off()
         elif v.incoming['action'] == 'exit':
-            perform_shutdown()
+            # perform_shutdown()
             return False
         elif v.incoming['action'] == 'reboot':
             mqtt_publish({'action': 'reboot'})
-            sleep_ms(500)
+            sleep_ms(1000)
+            # perform_shutdown(reset=True)
             from machine import reset
             reset()
         publish_relay_state(v.relays)
     v.incoming = None
+    v.led[0].off()
     return True
 
 
-def perform_shutdown(reset=False):
-    mqtt_publish({'state': 'disconnected'})
-    v.button.irq(handler=None)
-    v.mqtt_irq.deinit()
-    v.led_irq.deinit()
-    v.led.value(not v.config['led']['active'])
-    v.relay.value(not v.config['relay']['active'])
-    v.led_irq, v.mqtt_irq = None, None
-    v.button, v.led, v.relay, v.wifi, v.mqtt = None, None, None, None, None
-    # noinspection PyUnresolvedReferences
-    import unload
-    from gc import collect
-    collect()
+# def perform_shutdown(reset=False):
+#     mqtt_publish({'state': 'disconnected'})
+#     v.button.irq(handler=None)
+#     v.mqtt_irq.deinit()
+#     v.led_irq.deinit()
+#     v.led.value(not v.config['led']['active'])
+#     v.relay.value(not v.config['relay']['active'])
+#     v.led_irq, v.mqtt_irq = None, None
+#     v.button, v.led, v.relay, v.wifi, v.mqtt = None, None, None, None, None
+#
+#     # if reset:
+#     #     from machine import reset
+#     #     reset()
+#
+#     # noinspection PyUnresolvedReferences
+#     import unload
