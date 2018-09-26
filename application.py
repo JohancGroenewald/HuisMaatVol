@@ -2,7 +2,7 @@
 def run():
     # #######################################################
     from responsive import startup as responsive_startup    #
-    from config import SONOFF_BASIC as config_public
+    from config import SONOFF_DUAL_R2 as config_public
     responsive_startup(config_public)                       #
     # #######################################################
     from micropython import opt_level

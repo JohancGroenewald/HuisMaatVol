@@ -86,25 +86,25 @@ def led_relay_status(argument=None):
     for id, led in v.led.items():
         if v.config['led'][id]['relay'] is None:
             continue
-        led.value(v.config['led'][id]['active'])
+        led.on()
     sleep_ms(v.config['led_irq']['visual_cycle'][0])
     for id, led in v.led.items():
         if v.config['led'][id]['relay'] is None:
             continue
-        led.value(not led.value())
+        led.off()
     sleep_ms(v.config['led_irq']['visual_cycle'][1])
     for id, led in v.led.items():
         if v.config['led'][id]['relay'] is None:
             continue
         for relay in v.config['led'][id]['relay']:
-            if v.relay[relay].value() == v.config['relay'][relay]['active']:
-                led.value(not led.value())
-                continue
+            if v.relay[relay].state():
+                led.on()
+                break
     sleep_ms(v.config['led_irq']['visual_cycle'][2])
     for id, led in v.led.items():
         if v.config['led'][id]['relay'] is None:
             continue
-        led.value(not v.config['led'][id]['active'])
+        led.off()
 
 
 def mqtt_interrupt(timer):
