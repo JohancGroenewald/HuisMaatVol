@@ -7,7 +7,7 @@ SONOFF_BASIC = {
         'type': 'ESP8266EX'
     },
     'button': {
-        0: {'pin': 0, 'active': 0, 'debounce': 800, 'states': 1, 'relay': [0]},
+        0: {'pin': 0, 'active': 0, 'debounce': 100, 'states': 1, 'relay': [0]},
     },
     'led': {
         0: {'pin': 13, 'active': 0, 'relay': [0]},

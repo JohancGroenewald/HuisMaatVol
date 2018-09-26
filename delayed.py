@@ -14,7 +14,10 @@ def start_up(config):
     from ubinascii import hexlify                                                                       #
     v.device_id = hexlify(v.wifi.config('mac'), ':').decode().upper()                                   #
     # ###################################################################################################
-    from umqtt_simple import MQTTClient                                                                 #
+    from gc import collect
+    collect()
+    # ###################################################################################################
+    from umqtt_simple import MQTTClient
     v.mqtt = MQTTClient(
         client_id=v.device_id, server=v.config['mqtt']['ip'], port=v.config['mqtt']['port']
     )                                                                                                   #
@@ -37,28 +40,34 @@ def button_triggered(pin):
         if button.gpio == gpio:
             button.debounce(
                 v.config['button'][button.key]['debounce'],
-                button_0_debounced if gpio == 1 else
-                button_1_debounced if gpio == 2 else
-                button_2_debounced if gpio == 3 else
+                button_0_debounced if button.key == 0 else
+                button_1_debounced if button.key == 1 else
+                button_2_debounced if button.key == 2 else
                 button_3_debounced
             )
             break
 
 
 def button_0_debounced(timer):
-    toggle_relay(v.config['button'][0]['relays'])
+    button_pressed(0)
 
 
 def button_1_debounced(timer):
-    toggle_relay(v.config['button'][1]['relays'])
+    button_pressed(1)
 
 
 def button_2_debounced(timer):
-    toggle_relay(v.config['button'][2]['relays'])
+    button_pressed(2)
 
 
 def button_3_debounced(timer):
-    toggle_relay(v.config['button'][3]['relays'])
+    button_pressed(3)
+
+
+def button_pressed(key):
+    if v.button[key].state():
+        toggle_relay(v.config['button'][key]['relay'])
+    v.button[key].trigger(button_triggered)
 
 
 def toggle_relay(relays):
@@ -143,10 +152,11 @@ def mqtt_incoming(argument):
 
 def mqtt_connect(argument):
     v.mqtt.connect()
-    mqtt_publish({'state': 'connected', 'action': 'on'})
+    mqtt_publish({'state': 'connected'})
     if v.config['mqtt']['subscribe']:
         v.mqtt.set_callback(mqtt_callback)
         v.mqtt.subscribe(v.device_id)
+    publish_relay_state([v.relay.keys()])
     init_mqtt_irq()
 
 

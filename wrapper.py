@@ -24,6 +24,9 @@ class PinWrapper(MachinePin):
     def toggle(self):
         super().value(not super().value())
 
+    def state(self):
+        return super().value() == self.active
+
     def trigger(self, callback):
         if self.active == 1:
             super().irq(handler=callback, trigger=MachinePin.IRQ_RISING)

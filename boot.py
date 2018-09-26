@@ -1,5 +1,5 @@
 from micropython import opt_level
-opt_level(2)
+opt_level(3)
 
 # This code will be specific to the ESP8266, ESP8285 and ESP32
 # Hopefully I can find a way to identify the type of SOC at boot time.
