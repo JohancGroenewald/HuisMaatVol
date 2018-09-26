@@ -166,15 +166,18 @@ def mqtt_callback(topic, msg):
 
 
 def perform_actions():
+    print(v.incoming)
     if 'action' in v.incoming:
-        if v.incoming['action'] == 'on':
-            v.relay.value(v.config['relay']['active'])
-        elif v.incoming['action'] == 'off':
-            v.relay.value(not v.config['relay']['active'])
+        if 'on' in v.incoming['action']:
+            for key in v.incoming['action']['on']:
+                v.relay[key].on()
+        if 'off' in v.incoming['action']:
+            for key in v.incoming['action']['off']:
+                v.relay[key].off()
         elif v.incoming['action'] == 'exit':
             perform_shutdown()
             return False
-        publish_relay_state()
+        publish_relay_state(v.relays)
     v.incoming = None
     return True
 
