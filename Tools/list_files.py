@@ -13,5 +13,4 @@ for file in files:
     except:
         print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
 
-import sys
-del sys.modules['list_files']
+import unload

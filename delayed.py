@@ -31,6 +31,7 @@ def start_up(config):
     # ###################################################################################################
     v.mqtt_irq = Timer(v.config['mqtt']['timer'])                                                       #
     init_mqtt_irq()                                                                                     #
+    print('1R')
     # ###################################################################################################
 
 
@@ -145,6 +146,7 @@ def mqtt_publish(message):
 def mqtt_incoming(argument):
     v.mqtt.check_msg()
     if v.incoming is not None:
+        print('2R')
         if perform_actions() is False:
             return
     init_mqtt_irq()
@@ -158,11 +160,13 @@ def mqtt_connect(argument):
         v.mqtt.subscribe(v.device_id)
     publish_relay_state(v.relays)
     init_mqtt_irq()
+    print('3R')
 
 
 def mqtt_callback(topic, msg):
     from json import loads
     v.incoming = loads(msg)
+    print('4R')
 
 
 def perform_actions():
@@ -177,12 +181,17 @@ def perform_actions():
         elif v.incoming['action'] == 'exit':
             perform_shutdown()
             return False
+        elif v.incoming['action'] == 'reboot':
+            mqtt_publish({'action': 'reboot'})
+            sleep_ms(500)
+            from machine import reset
+            reset()
         publish_relay_state(v.relays)
     v.incoming = None
     return True
 
 
-def perform_shutdown():
+def perform_shutdown(reset=False):
     mqtt_publish({'state': 'disconnected'})
     v.button.irq(handler=None)
     v.mqtt_irq.deinit()
