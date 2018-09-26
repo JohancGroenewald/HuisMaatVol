@@ -156,7 +156,7 @@ def mqtt_connect(argument):
     if v.config['mqtt']['subscribe']:
         v.mqtt.set_callback(mqtt_callback)
         v.mqtt.subscribe(v.device_id)
-    publish_relay_state([v.relay.keys()])
+    publish_relay_state(v.relays)
     init_mqtt_irq()
 
 

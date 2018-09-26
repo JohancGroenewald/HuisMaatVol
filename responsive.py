@@ -4,8 +4,8 @@ import variables as v
 
 
 def startup(config):
-    # ###################################################################
-    for id, setup in config['button'].items():                          #
+    # ###########################################################################
+    for id, setup in config['button'].items():                                  #
         v.button[id] = PinWrapper(
             id, config['button'][id]['active'], setup['pin'], PinWrapper.IN
         )
@@ -16,10 +16,11 @@ def startup(config):
     for id, setup in config['relay'].items():
         v.relay[id] = PinWrapper(
             id, config['relay'][id]['active'], setup['pin'], PinWrapper.OUT
-        )                                                               #
-    # ###################################################################
-    for led in v.led.values():                                          #
+        )
+        v.relays.append(id)                                                     #
+    # ###########################################################################
+    for led in v.led.values():                                                  #
         led.off()
     for relay in v.relay.values():
-        relay.on()                                                      #
-    # ###################################################################
+        relay.on()                                                              #
+    # ###########################################################################

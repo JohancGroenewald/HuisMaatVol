@@ -3,6 +3,7 @@ device_id = None
 button = {}
 led = {}
 relay = {}
+relays = []
 
 wifi, mqtt = None, None
 

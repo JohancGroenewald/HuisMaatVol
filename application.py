@@ -5,6 +5,9 @@ def run():
     from config import SONOFF_BASIC as config_public
     responsive_startup(config_public)                       #
     # #######################################################
+    from micropython import opt_level
+    opt_level(3)
+    # #######################################################
     from config_local import config as config_local
     config_public.update(config_local)                      #
     # #######################################################
