@@ -113,6 +113,7 @@ def led_indicator(argument=None):
 
 
 def mqtt_interrupt(timer):
+    v.led[0].on()
     if v.wifi.isconnected() is False:
         pass
     elif v.wifi.isconnected() is True and not v.mqtt.connected():
@@ -123,6 +124,7 @@ def mqtt_interrupt(timer):
         v.mqtt_irq.deinit()
         from micropython import schedule
         schedule(mqtt_incoming, None)
+    v.led[0].off()
 
 
 def publish_relay_state(relays):
