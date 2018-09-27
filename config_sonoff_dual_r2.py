@@ -7,7 +7,7 @@ CONFIG = {
         'type': 'ESP8285'
     },
     'button': {
-        0: {'pin': 10, 'active': 0, 'debounce': 500, 'states': 2, 'relay': [0, 1]},
+        0: {'pin': 10, 'active': 0, 'debounce': 100, 'states': 2, 'relay': [0, 1]},
     },
     'led': {
         0: {'pin': 13, 'active': 0, 'relay': [0, 1]},

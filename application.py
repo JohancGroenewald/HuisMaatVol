@@ -1,8 +1,14 @@
-
+# noinspection PyArgumentList,PyUnresolvedReferences,PyStatementEffect
 def run():
     # ###########################################################
+    from os import listdir                                      #
+    config_module = [
+        f for f in listdir() if f.startswith('config_sonoff_')
+    ][0][:-3]
+    loaded_module = __import__(config_module)
+    CONFIG = getattr(loaded_module, 'CONFIG')                   #
+    # ###########################################################
     from responsive import startup as responsive_startup        #
-    from config_sonoff_dual_r2 import CONFIG
     responsive_startup(CONFIG)                                  #
     # ###########################################################
     from gc import collect                                      #
