@@ -66,13 +66,41 @@ def button_3_debounced(timer):
 
 def button_pressed(key):
     if v.button[key].state():
-        toggle_relay(v.config['button'][key]['relay'])
+        if v.config['button'][key]['states'] == 1:
+            toggle_relay(v.config['button'][key]['relay'])
+        elif v.config['button'][key]['states'] == 2:
+            flip_relay(v.config['button'][key]['relay'])
     v.button[key].trigger(button_triggered)
 
 
 def toggle_relay(relays):
     for relay in relays:
         v.relay[relay].value(not v.relay[relay].value())
+    from micropython import schedule
+    schedule(publish_relay_state, relays)
+
+
+def flip_relay(relays):
+    flipped = 0
+    for key in relays:
+        if v.relay[key].state():
+            flipped += 1
+    if flipped == len(relays):
+        for key in relays:
+            v.relay[key].off()
+    else:
+        flipped = True if flipped == 0 else False
+        for key in relays:
+            if flipped is False and v.relay[key].state():
+                v.relay[key].off()
+                flipped = True
+            elif flipped:
+                v.relay[key].on()
+                flipped = False
+                break
+        if flipped is True:
+            for key in relays:
+                v.relay[key].on()
     from micropython import schedule
     schedule(publish_relay_state, relays)
 
@@ -113,7 +141,6 @@ def led_indicator(argument=None):
 
 
 def mqtt_interrupt(timer):
-    v.led[0].on()
     if v.wifi.isconnected() is False:
         pass
     elif v.wifi.isconnected() is True and not v.mqtt.connected():
@@ -124,7 +151,6 @@ def mqtt_interrupt(timer):
         v.mqtt_irq.deinit()
         from micropython import schedule
         schedule(mqtt_incoming, None)
-    v.led[0].off()
 
 
 def publish_relay_state(relays):

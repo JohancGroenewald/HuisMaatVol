@@ -2,7 +2,7 @@
 def run():
     # ###########################################################
     from responsive import startup as responsive_startup        #
-    from config_sonoff_basic import CONFIG
+    from config_sonoff_dual_r2 import CONFIG
     responsive_startup(CONFIG)                                  #
     # ###########################################################
     from gc import collect                                      #
