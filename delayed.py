@@ -208,6 +208,7 @@ def perform_actions():
             for key in v.incoming['action']['off']:
                 v.relay[key].off()
         elif v.incoming['action'] == 'exit':
+            mqtt_publish({'action': 'exit'})
             perform_shutdown()
             return False
         elif v.incoming['action'] == 'reboot':

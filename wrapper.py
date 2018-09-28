@@ -31,7 +31,8 @@ class PinWrapper(MachinePin):
     def terminate(self):
         self._terminate = True
         super().irq(handler=None)
-        self.timer.deinit()
+        if self.timer is not None:
+            self.timer.deinit()
 
     def trigger(self, callback):
         if self._terminate:
