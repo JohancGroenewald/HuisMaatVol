@@ -14,3 +14,6 @@ incoming = None
 
 tmp_id = None
 tmp_button = None
+
+led_interrupt_active = False
+shutdown = False
