@@ -14,6 +14,7 @@ class PinWrapper(MachinePin):
         self.active = active
         self.gpio = id
         self.timer = None
+        self._terminate = False
 
     def on(self):
         super().value(self.active)
@@ -27,13 +28,22 @@ class PinWrapper(MachinePin):
     def state(self):
         return super().value() == self.active
 
+    def terminate(self):
+        self._terminate = True
+        super().irq(handler=None)
+        self.timer.deinit()
+
     def trigger(self, callback):
+        if self._terminate:
+            return
         if self.active == 1:
             super().irq(handler=callback, trigger=MachinePin.IRQ_RISING)
         else:
             super().irq(handler=callback, trigger=MachinePin.IRQ_FALLING)
 
     def debounce(self, period, callback):
+        if self._terminate:
+            return
         super().irq(handler=None)
         from machine import Timer
         self.timer = Timer(-1)

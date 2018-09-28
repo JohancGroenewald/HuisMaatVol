@@ -208,33 +208,42 @@ def perform_actions():
             for key in v.incoming['action']['off']:
                 v.relay[key].off()
         elif v.incoming['action'] == 'exit':
-            # perform_shutdown()
+            perform_shutdown()
             return False
         elif v.incoming['action'] == 'reboot':
             mqtt_publish({'action': 'reboot'})
-            sleep_ms(1000)
-            # perform_shutdown(reset=True)
-            from machine import reset
-            reset()
+            perform_shutdown(reset=True)
         publish_relay_state(v.relays)
     v.incoming = None
     v.led[0].off()
     return True
 
 
-# def perform_shutdown(reset=False):
-#     mqtt_publish({'state': 'disconnected'})
-#     v.button.irq(handler=None)
-#     v.mqtt_irq.deinit()
-#     v.led_irq.deinit()
-#     v.led.value(not v.config['led']['active'])
-#     v.relay.value(not v.config['relay']['active'])
-#     v.led_irq, v.mqtt_irq = None, None
-#     v.button, v.led, v.relay, v.wifi, v.mqtt = None, None, None, None, None
-#
-#     # if reset:
-#     #     from machine import reset
-#     #     reset()
-#
-#     # noinspection PyUnresolvedReferences
-#     import unload
+def perform_shutdown(reset=False):
+    v.mqtt_irq.deinit()
+    v.led_irq.deinit()
+    mqtt_publish({'state': 'disconnected'})
+    sleep_ms(1000)
+    for button in v.button.values():
+        button.terminate()
+    for led in v.led.values():
+        led.off()
+    for relay in v.relay.values():
+        relay.off()
+    v.button = None
+    v.led = None
+    v.relay = None
+    v.relays = None
+    v.wifi = None
+    v.mqtt = None
+    v.led_irq = None
+    v.mqtt_irq = None
+    v.config = None
+    v.incoming = None
+
+    if reset:
+        from machine import reset
+        reset()
+
+    # noinspection PyUnresolvedReferences
+    import unload
