@@ -28,7 +28,7 @@ class PinWrapper(MachinePin):
     def state(self):
         return super().value() == self.active
 
-    def terminate(self):
+    def disconnect(self):
         self._terminate = True
         super().irq(handler=None)
         if self.timer is not None:
