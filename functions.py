@@ -199,7 +199,7 @@ def perform_actions():
 
 def shutdown(reset=False, update=False):
     while v.led_interrupt_active:
-        sleep_ms(10)
+        sleep_ms(25)
     v.mqtt_irq.deinit()
     v.led_irq.deinit()
     for button in v.button.values():
@@ -208,10 +208,10 @@ def shutdown(reset=False, update=False):
         led.off()
     for relay in v.relay.values():
         relay.off()
-    # publish_relay_state(v.relays)
-    # sleep_ms(1000)
-    # mqtt_publish({'state': 'disconnected'})
-    # sleep_ms(1000)
+    publish_relay_state(v.relays)
+    sleep_ms(1000)
+    mqtt_publish({'state': 'disconnected'})
+    sleep_ms(1000)
     v.button = None
     v.led = None
     v.relay = None
@@ -231,5 +231,3 @@ def shutdown(reset=False, update=False):
     if reset:
         from machine import reset
         reset()
-
-    print('SHUTDOWN COMPLETE')
