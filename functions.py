@@ -114,7 +114,8 @@ def led_indicator(argument=None):
 
 def mqtt_interrupt(timer):
     if v.wifi.isconnected() is False:
-        pass
+        if v.mqtt.connected():
+            v.mqtt.disconnect()
     elif v.wifi.isconnected() is True and not v.mqtt.connected():
         v.mqtt_irq.deinit()
         from micropython import schedule
@@ -212,6 +213,8 @@ def shutdown(reset=False, update=False):
     sleep_ms(1000)
     mqtt_publish({'state': 'disconnected'})
     sleep_ms(1000)
+    v.mqtt.disconnect()
+    sleep_ms(1000)
     v.button = None
     v.led = None
     v.relay = None
@@ -229,5 +232,9 @@ def shutdown(reset=False, update=False):
         reset = True
 
     if reset:
+        # noinspection PyUnresolvedReferences
+        from webrepl import stop
+        stop()
+
         from machine import reset
         reset()

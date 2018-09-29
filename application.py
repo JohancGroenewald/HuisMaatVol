@@ -3,8 +3,8 @@ def run():
     # ###########################################################
     from os import listdir                                      #
     config_module = [
-        f for f in listdir() if f.startswith('config_sonoff_')
-    ][0][:-3]
+        f[:-3] for f in listdir() if f.startswith('config_sonoff_')
+    ][0]
     loaded_module = __import__(config_module)
     CONFIG = getattr(loaded_module, 'CONFIG')                   #
     # ###########################################################
