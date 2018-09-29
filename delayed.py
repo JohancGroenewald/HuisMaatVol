@@ -28,8 +28,10 @@ def start_up(config):
         client_id=v.device_id, server=v.config['mqtt']['ip'], port=v.config['mqtt']['port']
     )                                                                                                   #
     # ###################################################################################################
-    from machine import Timer
-    v.led_irq = Timer(v.config['led_irq']['timer'])                                                     #
+    v.relays.extend([key for key in v.relay.keys()])                                                    #
+    # ###################################################################################################
+    from machine import Timer                                                                           #
+    v.led_irq = Timer(v.config['led_irq']['timer'])
     v.led_irq.init(mode=Timer.PERIODIC, period=v.config['led_irq']['period'], callback=led_interrupt)   #
     # ###################################################################################################
     for button in v.button.values():                                                                    #
