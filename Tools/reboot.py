@@ -1,9 +1,10 @@
-import machine
-import time
-
-print('Rebooting ... please wait until the WebREPL becomes \'Disconnected\'')
+print('Rebooting in 2 seconds...')
+print('Disconnecting WebRepl...')
 # noinspection PyUnresolvedReferences
 from webrepl import stop
 stop()
-time.sleep(2)
-machine.reset()
+# noinspection PyUnresolvedReferences
+from time import sleep_ms
+sleep_ms(2000)
+from machine import reset
+reset()

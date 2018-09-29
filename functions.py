@@ -210,11 +210,11 @@ def shutdown(reset=False, update=False):
     for relay in v.relay.values():
         relay.off()
     publish_relay_state(v.relays)
-    sleep_ms(1000)
+    sleep_ms(600)
     mqtt_publish({'state': 'disconnected'})
-    sleep_ms(1000)
+    sleep_ms(600)
     v.mqtt.disconnect()
-    sleep_ms(1000)
+    sleep_ms(250)
     v.button = None
     v.led = None
     v.relay = None
@@ -225,16 +225,11 @@ def shutdown(reset=False, update=False):
     v.mqtt_irq = None
     v.config = None
 
-    # noinspection PyUnresolvedReferences
-    import unload
-
     if update:
         reset = True
 
     if reset:
-        # noinspection PyUnresolvedReferences
-        from webrepl import stop
-        stop()
+        import reboot
 
-        from machine import reset
-        reset()
+    # noinspection PyUnresolvedReferences
+    import unload
