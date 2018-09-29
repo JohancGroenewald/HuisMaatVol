@@ -11,6 +11,7 @@ exclude = [
     'mem_info.py',
     'reboot.py',
     'unload.py',
+    'update.py',
 
     'webrepl_cfg.py',
 
@@ -23,6 +24,7 @@ exclude = [
     # 'config_sonoff_touch_t1_r2_us_v1_2gang.py',
     # 'config_sonoff_touch_t1_r2_us_v1_3gang.py',
     'delayed.py',
+    'functions.py',
     'responsive.py',
     'umqtt_simple.py',
     'variables.py',
@@ -37,6 +39,7 @@ for f in files:
     print('Deleting ... {}'.format(f))
     os.remove(f)
 
+# noinspection PyUnresolvedReferences
 import unload
 
 import micropython
