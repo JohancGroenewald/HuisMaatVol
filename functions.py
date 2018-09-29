@@ -180,6 +180,9 @@ def perform_actions():
         if 'off' in v.incoming['action']:
             for key in v.incoming['action']['off']:
                 v.relay[key].off()
+        if 'connect' in v.incoming['action']:
+            print(v.incoming['action']['connect'])
+
         elif v.incoming['action'] == 'update':
             mqtt_publish({'action': 'update'})
             shutdown(update=True)
