@@ -160,7 +160,8 @@ def mqtt_connect(argument):
     v.mqtt.connect()
     mqtt_publish({
         'state': '{}connected'.format('re' if v.reconnected else ''),
-        'ssid': v.wifi.config('essid')
+        'ssid': v.wifi.config('essid'),
+        'module': v.config_module
     })
     v.reconnected = False
     if v.config['mqtt']['subscribe']:

@@ -11,7 +11,8 @@ from functions import (
 
 
 # noinspection PyUnresolvedReferences
-def start_up(config):
+def start_up(config, loaded_module):
+    v.config_module = loaded_module
     v.config = config
     # ###################################################################################################
     from network import WLAN, STA_IF                                                                    #

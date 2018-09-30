@@ -9,6 +9,7 @@ wifi, mqtt = None, None
 
 led_irq, mqtt_irq = None, None
 
+config_module = None
 config = None
 incoming = None
 
