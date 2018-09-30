@@ -1,8 +1,9 @@
 import os
+# noinspection PyUnresolvedReferences
 from crc16 import crc16
 
 ignore = [
-    '.git', '.gitignore', '.idea', '__pycache__', 'tools', 'archive'
+    '.git', '.gitignore', '.idea', '__pycache__', 'Tools', 'Argief'
 ]
 
 print('--[TOOLS]----------------------------------------------')
