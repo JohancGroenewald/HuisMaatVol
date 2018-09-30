@@ -41,6 +41,7 @@ def micropython():
     # noinspection PyUnresolvedReferences
     import uos
 
+    print('--[FILES]----------------------------------------------')
     # noinspection PyArgumentList
     files = [f for f in os.listdir()]
     files.sort()
