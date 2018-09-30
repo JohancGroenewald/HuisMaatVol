@@ -18,3 +18,6 @@ tmp_button = None
 led_interrupt_active = False
 shutdown = False
 reconnected = False
+
+update = False
+reset = False

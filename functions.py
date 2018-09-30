@@ -159,7 +159,8 @@ def mqtt_incoming(argument):
 def mqtt_connect(argument):
     v.mqtt.connect()
     mqtt_publish({
-        'state': 'reconnected' if v.reconnected else 'connected'
+        'state': '{}connected'.format('re' if v.reconnected else ''),
+        'ssid': v.wifi.config('essid')
     })
     v.reconnected = False
     if v.config['mqtt']['subscribe']:
@@ -174,6 +175,10 @@ def mqtt_callback(topic, msg):
     v.incoming = loads(msg)
 
 
+def mqtt_publish_disconnected():
+    mqtt_publish({'state': 'disconnected'})
+
+
 def perform_actions():
     v.led[0].on()
     if 'action' in v.incoming:
@@ -184,7 +189,7 @@ def perform_actions():
             for key in v.incoming['action']['off']:
                 v.relay[key].off()
         if 'connect' in v.incoming['action']:
-            mqtt_publish({'state': 'disconnected'})
+            mqtt_publish_disconnected()
             sleep_ms(500)
             v.mqtt.disconnect()
             sleep_ms(500)
@@ -193,54 +198,19 @@ def perform_actions():
             v.reconnected = True
         elif v.incoming['action'] == 'update':
             mqtt_publish({'action': 'update'})
-            shutdown(update=True)
+            v.update = True
+            import shutdown
             return False
         elif v.incoming['action'] == 'exit':
             mqtt_publish({'action': 'exit'})
-            shutdown()
+            import shutdown
             return False
         elif v.incoming['action'] == 'reboot':
             mqtt_publish({'action': 'reboot'})
-            shutdown(reset=True)
+            v.reset = True
+            import shutdown
             return False
         publish_relay_state(v.relays)
     v.incoming = None
     v.led[0].off()
     return True
-
-
-def shutdown(reset=False, update=False):
-    while v.led_interrupt_active:
-        sleep_ms(25)
-    v.mqtt_irq.deinit()
-    v.led_irq.deinit()
-    for button in v.button.values():
-        button.disconnect()
-    for led in v.led.values():
-        led.off()
-    for relay in v.relay.values():
-        relay.off()
-    publish_relay_state(v.relays)
-    sleep_ms(600)
-    mqtt_publish({'state': 'disconnected'})
-    sleep_ms(600)
-    v.mqtt.disconnect()
-    sleep_ms(250)
-    v.button = None
-    v.led = None
-    v.relay = None
-    v.relays = None
-    v.wifi = None
-    v.mqtt = None
-    v.led_irq = None
-    v.mqtt_irq = None
-    v.config = None
-
-    if update:
-        reset = True
-
-    if reset:
-        import reboot
-
-    # noinspection PyUnresolvedReferences
-    import unload
