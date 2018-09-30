@@ -158,7 +158,10 @@ def mqtt_incoming(argument):
 
 def mqtt_connect(argument):
     v.mqtt.connect()
-    mqtt_publish({'state': 'connected'})
+    mqtt_publish({
+        'state': 'reconnected' if v.reconnected else 'connected'
+    })
+    v.reconnected = False
     if v.config['mqtt']['subscribe']:
         v.mqtt.set_callback(mqtt_callback)
         v.mqtt.subscribe(v.device_id)
@@ -181,8 +184,13 @@ def perform_actions():
             for key in v.incoming['action']['off']:
                 v.relay[key].off()
         if 'connect' in v.incoming['action']:
+            mqtt_publish({'state': 'disconnected'})
+            sleep_ms(500)
+            v.mqtt.disconnect()
+            sleep_ms(500)
             ssid, password = v.incoming['action']['connect']
             v.wifi.connect(ssid, password)
+            v.reconnected = True
         elif v.incoming['action'] == 'update':
             mqtt_publish({'action': 'update'})
             shutdown(update=True)
