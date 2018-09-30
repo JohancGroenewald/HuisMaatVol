@@ -13,5 +13,8 @@ for f in files:
     print('Deleting ... {}'.format(f))
     os.remove(f)
 
+# noinspection PyUnresolvedReferences
+import unload
+
 import micropython
 micropython.mem_info()

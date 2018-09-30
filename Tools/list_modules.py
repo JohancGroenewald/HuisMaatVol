@@ -8,4 +8,6 @@ for module in modules:
     else:
         print(module)
 
-del sys.modules['list_modules']
+from sys import modules
+if __name__ in modules:
+    del modules[__name__]

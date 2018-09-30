@@ -7,4 +7,5 @@ device_id = hexlify(wifi.config('mac'), ':').decode().upper()
 print('device_id: {}'.format(device_id))
 
 from sys import modules
-del modules['device_id']
+if __name__ in modules:
+    del modules[__name__]
