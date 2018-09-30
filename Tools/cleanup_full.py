@@ -14,7 +14,11 @@ for f in files:
     os.remove(f)
 
 # noinspection PyUnresolvedReferences
-import unload
+# import unload <-- Module has been cleaned so cant run it now!
 
 import micropython
 micropython.mem_info()
+
+from sys import modules
+if __name__ in modules:
+    del modules[__name__]

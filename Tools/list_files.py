@@ -55,6 +55,8 @@ def micropython():
             print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
 
     from sys import modules
+    if 'crc16' in modules:
+        del modules['crc16']
     if __name__ in modules:
         del modules[__name__]
 

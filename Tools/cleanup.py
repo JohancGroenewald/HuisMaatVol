@@ -40,7 +40,7 @@ for f in files:
     os.remove(f)
 
 # noinspection PyUnresolvedReferences
-import unload
+import unload       # Module was not cleaned so is available to use
 
 import micropython
 micropython.mem_info()
