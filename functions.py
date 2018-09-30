@@ -114,8 +114,7 @@ def led_indicator(argument=None):
 
 def mqtt_interrupt(timer):
     if v.wifi.isconnected() is False:
-        if v.mqtt.connected():
-            v.mqtt.disconnect()
+        mqtt_disconnect()
     elif v.wifi.isconnected() is True and not v.mqtt.connected():
         v.mqtt_irq.deinit()
         from micropython import schedule
@@ -171,6 +170,12 @@ def mqtt_connect(argument):
     init_mqtt_irq()
 
 
+def mqtt_disconnect():
+    if v.mqtt.connected():
+        v.mqtt.disconnect()
+        sleep_ms(500)
+
+
 def mqtt_callback(topic, msg):
     from json import loads
     v.incoming = loads(msg)
@@ -178,6 +183,11 @@ def mqtt_callback(topic, msg):
 
 def mqtt_publish_disconnected():
     mqtt_publish({'state': 'disconnected'})
+    sleep_ms(500)
+
+
+def mqtt_publish_action(action):
+    mqtt_publish({'action': action})
 
 
 def perform_actions():
@@ -191,23 +201,21 @@ def perform_actions():
                 v.relay[key].off()
         if 'connect' in v.incoming['action']:
             mqtt_publish_disconnected()
-            sleep_ms(500)
-            v.mqtt.disconnect()
-            sleep_ms(500)
+            mqtt_disconnect()
             ssid, password = v.incoming['action']['connect']
             v.wifi.connect(ssid, password)
             v.reconnected = True
         elif v.incoming['action'] == 'update':
-            mqtt_publish({'action': 'update'})
+            mqtt_publish_action('update')
             v.update = True
             import shutdown
             return False
         elif v.incoming['action'] == 'exit':
-            mqtt_publish({'action': 'exit'})
+            mqtt_publish_action('exit')
             import shutdown
             return False
         elif v.incoming['action'] == 'reboot':
-            mqtt_publish({'action': 'reboot'})
+            mqtt_publish_action('reboot')
             v.reset = True
             import shutdown
             return False
