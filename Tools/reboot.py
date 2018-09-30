@@ -1,14 +1,11 @@
-print('Rebooting in 2 seconds...')
+seconds = 3
+print('Rebooting in {} seconds...'.format(seconds))
 print('Disconnecting WebRepl...')
 # noinspection PyUnresolvedReferences
 from webrepl import stop
+stop()
 # noinspection PyUnresolvedReferences
 from time import sleep_ms
-stop()
-sleep_ms(500)
-stop()
-sleep_ms(500)
-stop()
-sleep_ms(2000)
+sleep_ms(seconds * 1000)
 from machine import reset
 reset()
