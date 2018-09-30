@@ -1,7 +1,10 @@
 import os
+# noinspection PyUnresolvedReferences
 import uos
+# noinspection PyUnresolvedReferences
 from crc16 import crc16
 
+# noinspection PyArgumentList
 files = [f for f in os.listdir()]
 files.sort()
 for file in files:
