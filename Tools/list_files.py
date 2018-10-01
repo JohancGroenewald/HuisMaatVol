@@ -2,22 +2,25 @@ import os
 from sys import implementation
 
 if implementation.name == 'micropython':
-    # noinspection PyUnresolvedReferences
-    from crc16 import crc16_stream
     from micropython import opt_level
     opt_level(0)
     print('opt_level: {}'.format(opt_level()))
+    from json import loads
+    # noinspection PyUnresolvedReferences
+    from crc16 import crc16_stream
 else:
+    from json import dumps
     # noinspection PyUnresolvedReferences
     from crc16 import crc16
 
+check_sums = 'checksum.json'
 
 def cpython():
     ignore = [
         '.git', '.gitignore', '.idea', '__pycache__', 'Tools', 'Argief'
     ]
-
-    print('--[TOOLS]----------------------------------------------')
+    checksum_buffer = {}
+    print('--[TOOLS]--------------------------------------------------')
     files = [f for f in os.listdir('tools')]
     files.sort()
     for file in files:
@@ -27,11 +30,12 @@ def cpython():
         try:
             with open(os.path.join('tools', file), 'rb') as f:
                 h = crc16(f.read())
-            print('{: <25}  {: >6}  {: >4}'.format(file, h, s[6]))
+                checksum_buffer[file] = h
+            print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
         except:
-            print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
+            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-    print('--[APPLICATION]----------------------------------------')
+    print('--[APPLICATION]--------------------------------------------')
     files = [f for f in os.listdir()]
     files.sort()
     for file in files:
@@ -41,16 +45,23 @@ def cpython():
         try:
             with open(file, 'rb') as f:
                 h = crc16(f.read())
-            print('{: <25}  {: >6}  {: >4}'.format(file, h, s[6]))
+                checksum_buffer[file] = h
+            print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
         except:
-            print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
+            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
+    url = check_sums
+    with open(url, 'w') as f:
+        f.write(dumps(checksum_buffer))
 
 
 def micropython():
     # noinspection PyUnresolvedReferences
+    with open(check_sums) as f:
+        checksum_buffer = loads(f.read())
+    print(checksum_buffer)
     import uos
     listed = []
-    print('--[TOOLS]----------------------------------------------')
+    print('--[TOOLS]--------------------------------------------------')
     tools = [
         'cat.py',
         'cleanup.py',
@@ -73,11 +84,14 @@ def micropython():
         try:
             with open(file, 'rb') as f:
                 h = crc16_stream(f)
-            print('{: <25}  {: >6}  {: >4}'.format(file, h, s[6]))
+            re_h = checksum_buffer[file]
+            print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
+                file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
+            )
         except:
-            print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
+            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-    print('--[APPLICATION]----------------------------------------')
+    print('--[APPLICATION]--------------------------------------------')
     application = [
         'application.py',
         'boot.py',
@@ -104,11 +118,14 @@ def micropython():
         try:
             with open(file, 'rb') as f:
                 h = crc16_stream(f)
-            print('{: <25}  {: >6}  {: >4}'.format(file, h, s[6]))
+            re_h = checksum_buffer[file]
+            print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
+                file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
+            )
         except:
-            print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
+            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-    print('--[UN GROUPED]-----------------------------------------')
+    print('--[UN GROUPED]---------------------------------------------')
     # noinspection PyArgumentList
     files = [f for f in os.listdir() if f not in listed]
     files.sort()
@@ -117,9 +134,9 @@ def micropython():
         try:
             with open(file, 'rb') as f:
                 h = crc16_stream(f)
-            print('{: <25}  {: >6}  {: >4}'.format(file, h, s[6]))
+            print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
         except:
-            print('{: <25}   ERROR  {: >4}'.format(file, s[6]))
+            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
     from sys import modules
     if 'crc16' in modules:
@@ -128,7 +145,7 @@ def micropython():
         del modules[__name__]
 
 
-print('--[IMPLEMENTATION]-------------------------------------')
+print('--[IMPLEMENTATION]-----------------------------------------')
 print('{}'.format(implementation.name))
 if implementation.name == 'micropython':
     micropython()

@@ -67,3 +67,4 @@ venvp/
 documentation/
 Argief/
 config_local.py
+checksum.json
