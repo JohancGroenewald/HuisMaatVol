@@ -3,17 +3,20 @@ from sys import implementation
 
 if implementation.name == 'micropython':
     from micropython import opt_level
-    opt_level(0)
+    opt_level(3)
     print('opt_level: {}'.format(opt_level()))
+    from gc import collect
     from json import loads
     # noinspection PyUnresolvedReferences
     from crc16 import crc16_stream
+    collect()
 else:
     from json import dumps
     # noinspection PyUnresolvedReferences
     from crc16 import crc16
 
 check_sums = 'checksum.json'
+
 
 def cpython():
     ignore = [
@@ -55,10 +58,10 @@ def cpython():
 
 
 def micropython():
+    collect()
     # noinspection PyUnresolvedReferences
     with open(check_sums) as f:
         checksum_buffer = loads(f.read())
-    print(checksum_buffer)
     import uos
     listed = []
     print('--[TOOLS]--------------------------------------------------')
@@ -143,7 +146,7 @@ def micropython():
         del modules['crc16']
     if __name__ in modules:
         del modules[__name__]
-
+    collect()
 
 print('--[IMPLEMENTATION]-----------------------------------------')
 print('{}'.format(implementation.name))
