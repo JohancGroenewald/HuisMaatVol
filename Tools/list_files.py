@@ -80,8 +80,11 @@ if implementation.name == 'micropython':
                 with open(file, 'rb') as f:
                     h = crc16_stream(f)
                 re_h = checksum_buffer[file]
-                print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
-                    file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
+                end = '' if len(file) < 35 else '\n'
+                print('{: <35}'.format(file), end=end)
+                mask = '{: ' + ('>41' if len(file) > 35 else '>6') + '}  {: >6} {: >6} {}'
+                print(mask.format(
+                    s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
                 )
             except:
                 print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
