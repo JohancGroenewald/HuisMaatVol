@@ -1,5 +1,8 @@
-import os
 from sys import implementation
+
+check_sums = 'checksum.json'
+print('--[IMPLEMENTATION]-----------------------------------------')
+print('{}'.format(implementation.name))
 
 if implementation.name == 'micropython':
     from micropython import opt_level
@@ -10,161 +13,103 @@ if implementation.name == 'micropython':
     # noinspection PyUnresolvedReferences
     from crc16 import crc16_stream
     collect()
-else:
-    from json import dumps
+    import os
     # noinspection PyUnresolvedReferences
-    from crc16 import crc16
+    def micropython():
+        collect()
+        # noinspection PyUnresolvedReferences
+        with open(check_sums) as f:
+            checksum_buffer = loads(f.read())
+        import uos
+        listed = []
+        print('--[TOOLS]--------------------------------------------------')
+        tools = [
+            'cat.py',
+            'cleanup.py',
+            'cleanup_full.py',
+            'crc16.py',
+            'device_id.py',
+            'list_files.py',
+            'list_modules.py',
+            'mem_info.py',
+            'reboot.py',
+            'unload.py',
+            'update.py'
+        ]
+        # noinspection PyArgumentList
+        files = [f for f in os.listdir() if f in tools]
+        files.sort()
+        listed.extend(files)
+        for file in files:
+            s = uos.stat(file)
+            try:
+                with open(file, 'rb') as f:
+                    h = crc16_stream(f)
+                re_h = checksum_buffer[file]
+                print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
+                    file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
+                )
+            except:
+                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-check_sums = 'checksum.json'
+        print('--[APPLICATION]--------------------------------------------')
+        application = [
+            'application.py',
+            'boot.py',
+            'config_local.py',
+            'config_sonoff_4ch_v2.py',
+            'config_sonoff_basic.py',
+            'config_sonoff_dual_r2.py',
+            'config_sonoff_touch_t1_r2_us_v1_2gang.py',
+            'config_sonoff_touch_t1_r2_us_v1_3gang.py',
+            'delayed.py',
+            'functions.py',
+            'responsive.py',
+            'shutdown.py',
+            'umqtt_simple.py',
+            'variables.py',
+            'wrapper.py'
+        ]
+        # noinspection PyArgumentList
+        files = [f for f in os.listdir() if f in application]
+        files.sort()
+        listed.extend(files)
+        for file in files:
+            s = uos.stat(file)
+            try:
+                with open(file, 'rb') as f:
+                    h = crc16_stream(f)
+                re_h = checksum_buffer[file]
+                print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
+                    file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
+                )
+            except:
+                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
+        print('--[UN GROUPED]---------------------------------------------')
+        # noinspection PyArgumentList
+        files = [f for f in os.listdir() if f not in listed]
+        files.sort()
+        for file in files:
+            s = uos.stat(file)
+            try:
+                with open(file, 'rb') as f:
+                    h = crc16_stream(f)
+                print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
+            except:
+                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-def cpython():
-    ignore = [
-        '.git', '.gitignore', '.idea', '__pycache__', 'Tools', 'Argief'
-    ]
-    checksum_buffer = {}
-    print('--[TOOLS]--------------------------------------------------')
-    files = [f for f in os.listdir('tools') if f not in [check_sums]]
-    files.sort()
-    for file in files:
-        if file in ignore:
-            continue
-        s = os.stat(os.path.join('tools', file))
-        try:
-            with open(os.path.join('tools', file), 'rb') as f:
-                h = crc16(f.read())
-                checksum_buffer[file] = h
-            print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
-        except:
-            print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
+        # from sys import modules
+        # if 'crc16' in modules:
+        #     del modules['crc16']
+        # if __name__ in modules:
+        #     del modules[__name__]
 
-    print('--[APPLICATION]--------------------------------------------')
-    files = [f for f in os.listdir() if f not in [check_sums]]
-    files.sort()
-    for file in files:
-        if file in ignore:
-            continue
-        s = os.stat(file)
-        try:
-            with open(file, 'rb') as f:
-                h = crc16(f.read())
-                checksum_buffer[file] = h
-            print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
-        except:
-            print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
-
-    print('--[CHECKSUM]-----------------------------------------------')
-    url = check_sums
-    with open(url, 'w') as f:
-        f.write(dumps(checksum_buffer))
-    try:
-        with open(check_sums, 'rb') as f:
-            h = crc16(f.read())
-            checksum_buffer[check_sums] = h
-        print('{: <40}  {: >6}  {: >4}'.format(check_sums, h, s[6]))
-    except:
-        print('{: <40}   ERROR  {: >4}'.format(check_sums, s[6]))
-
-
-# noinspection PyUnresolvedReferences
-def micropython():
-    collect()
-    # noinspection PyUnresolvedReferences
-    with open(check_sums) as f:
-        checksum_buffer = loads(f.read())
-    import uos
-    listed = []
-    print('--[TOOLS]--------------------------------------------------')
-    tools = [
-        'cat.py',
-        'cleanup.py',
-        'cleanup_full.py',
-        'crc16.py',
-        'device_id.py',
-        'list_files.py',
-        'list_modules.py',
-        'mem_info.py',
-        'reboot.py',
-        'unload.py',
-        'update.py'
-    ]
-    # noinspection PyArgumentList
-    files = [f for f in os.listdir() if f in tools]
-    files.sort()
-    listed.extend(files)
-    for file in files:
-        s = uos.stat(file)
-        try:
-            with open(file, 'rb') as f:
-                h = crc16_stream(f)
-            re_h = checksum_buffer[file]
-            print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
-                file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
-            )
-        except:
-            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
-
-    print('--[APPLICATION]--------------------------------------------')
-    application = [
-        'application.py',
-        'boot.py',
-        'config_local.py',
-        'config_sonoff_4ch_v2.py',
-        'config_sonoff_basic.py',
-        'config_sonoff_dual_r2.py',
-        'config_sonoff_touch_t1_r2_us_v1_2gang.py',
-        'config_sonoff_touch_t1_r2_us_v1_3gang.py',
-        'delayed.py',
-        'functions.py',
-        'responsive.py',
-        'shutdown.py',
-        'umqtt_simple.py',
-        'variables.py',
-        'wrapper.py'
-    ]
-    # noinspection PyArgumentList
-    files = [f for f in os.listdir() if f in application]
-    files.sort()
-    listed.extend(files)
-    for file in files:
-        s = uos.stat(file)
-        try:
-            with open(file, 'rb') as f:
-                h = crc16_stream(f)
-            re_h = checksum_buffer[file]
-            print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
-                file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
-            )
-        except:
-            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
-
-    print('--[UN GROUPED]---------------------------------------------')
-    # noinspection PyArgumentList
-    files = [f for f in os.listdir() if f not in listed]
-    files.sort()
-    for file in files:
-        s = uos.stat(file)
-        try:
-            with open(file, 'rb') as f:
-                h = crc16_stream(f)
-            print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
-        except:
-            print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
-
-    # from sys import modules
-    # if 'crc16' in modules:
-    #     del modules['crc16']
-    # if __name__ in modules:
-    #     del modules[__name__]
-
-
-
-print('--[IMPLEMENTATION]-----------------------------------------')
-print('{}'.format(implementation.name))
-if implementation.name == 'micropython':
     micropython()
     collect()
     import unload
     collect()
 else:
-    cpython()
+    # noinspection PyUnresolvedReferences
+    from list_files_local import cpython
+    cpython(check_sums)
