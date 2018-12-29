@@ -6,9 +6,24 @@ from crc16 import crc16
 
 def cpython(check_sums):
     ignore = [
-        '.git', '.gitignore', '.idea', '__pycache__', 'Tools', 'Argief'
+        '.git', '.gitignore', '.idea', '__pycache__', 'Tools', 'Argief', 'Evaluate'
     ]
     checksum_buffer = {}
+    print('--[EVALUATE]-----------------------------------------------')
+    files = [f for f in os.listdir('evaluate') if f not in [check_sums]]
+    files.sort()
+    for file in files:
+        if file in ignore:
+            continue
+        s = os.stat(os.path.join('evaluate', file))
+        try:
+            with open(os.path.join('evaluate', file), 'rb') as f:
+                h = crc16(f.read())
+                checksum_buffer[file] = h
+            print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
+        except:
+            print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
+
     print('--[TOOLS]--------------------------------------------------')
     files = [f for f in os.listdir('tools') if f not in [check_sums]]
     files.sort()

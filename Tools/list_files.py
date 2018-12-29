@@ -6,6 +6,7 @@ print('{}'.format(implementation.name))
 
 if implementation.name == 'micropython':
     from micropython import opt_level
+    re_opt_level = opt_level()
     opt_level(3)
     print('opt_level: {}'.format(opt_level()))
     from gc import collect
@@ -22,6 +23,29 @@ if implementation.name == 'micropython':
             checksum_buffer = loads(f.read())
         import uos
         listed = []
+        print('--[EVALUATE]-----------------------------------------------')
+        tools = [
+            'boot.py',
+            'main.py',
+            'app.py',
+            'classes.py',
+            'mqtt.py'
+        ]
+        # noinspection PyArgumentList
+        files = [f for f in os.listdir() if f in tools]
+        files.sort()
+        listed.extend(files)
+        for file in files:
+            s = uos.stat(file)
+            try:
+                with open(file, 'rb') as f:
+                    h = crc16_stream(f)
+                re_h = checksum_buffer[file]
+                print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
+                    file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
+                )
+            except:
+                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
         print('--[TOOLS]--------------------------------------------------')
         tools = [
             'cat.py',
@@ -34,7 +58,8 @@ if implementation.name == 'micropython':
             'mem_info.py',
             'reboot.py',
             'unload.py',
-            'update.py'
+            'update.py',
+            'wifi_scan.py'
         ]
         # noinspection PyArgumentList
         files = [f for f in os.listdir() if f in tools]
@@ -102,16 +127,14 @@ if implementation.name == 'micropython':
             except:
                 print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-        # from sys import modules
-        # if 'crc16' in modules:
-        #     del modules['crc16']
-        # if __name__ in modules:
-        #     del modules[__name__]
+        opt_level(re_opt_level)
 
     micropython()
-    collect()
-    import unload
-    collect()
+
+    from sys import modules
+    if __name__ in modules:
+        del modules[__name__]
+
 else:
     # noinspection PyUnresolvedReferences
     from list_files_local import cpython

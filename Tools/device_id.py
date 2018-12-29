@@ -1,4 +1,6 @@
-from os import listdir                                      #
+from os import listdir
+
+# noinspection PyArgumentList
 config_module = [
     f[:-3] for f in listdir() if f.startswith('config_sonoff_')
 ][0]

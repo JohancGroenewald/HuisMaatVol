@@ -1,5 +1,7 @@
-from sys import modules
-from gc import collect
+# noinspection PyUnresolvedReferences
+from gc import collect, mem_free
+
+print('mem_free ...', mem_free())
 
 system_modules = [
     # 'flashbdev',
@@ -12,25 +14,30 @@ buffer_len = 0
 
 
 def print_buffer(module, buffer_len):
-    buffer = '\r{}{}'.format(message, module)
-    if len(buffer) < buffer_len:
-        padding = (' ' * (buffer_len - len(buffer)))
+    _buffer = '\r{}{}'.format(message, module)
+    if len(_buffer) < buffer_len:
+        _padding = (' ' * (buffer_len - len(_buffer)))
     else:
-        padding = ''
-    print('{}{}'.format(buffer, padding), end='')
-    return len(buffer)
+        _padding = ''
+    print('{}{}'.format(_buffer, _padding), end='')
+    return len(_buffer)
 
-
+from sys import modules
 for module in modules:
     buffer_len = print_buffer(module, buffer_len)
     if module not in system_modules:
         del modules[module]
+
 print_buffer('done', buffer_len)
 
-from sys import modules
-if __name__ in modules:
-    del modules[__name__]
+import micropython
+print()
+print('QStr Info ... ', end='')
+micropython.qstr_info()
 
-print('\nRunning the GC ... ', end='')
+del micropython
+
+print('Running the GC ... ', end='')
 collect()
 print('done')
+print('mem_free ...', mem_free())
