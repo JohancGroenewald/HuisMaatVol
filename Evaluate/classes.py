@@ -3,12 +3,13 @@ from gc import collect
 
 # noinspection PyUnresolvedReferences
 class Application:
-    _mqtt_msg = None
+    mqtt_msg = None
 
     def __init__(self, verbose=0):
         self.verbose = verbose
         self.device_id = None
         self.wifi = None
+        self.reconnect_timeout = 0
         # ---------------------------------------------
         # Do device setup here to optimize availability
         # ---------------------------------------------
@@ -30,8 +31,11 @@ class Application:
         while watch_dog:
             watch_dog -= 1
             if self.verbose:
-                print(' run.loop: >>{}<<'.format(watch_dog), end='\r')
-            self.mqtt.check_msg()
+                print('#run.loop: >>{}<<'.format(watch_dog), end='\r')
+            if self.wifi.isconnected():
+                self.mqtt.check_msg()
+            elif self.reconnect_timeout == 0:
+                pass
             sleep(1)
             collect()
         if self.verbose:
@@ -41,12 +45,15 @@ class Application:
     def connect_wifi(self, config):
         from network import WLAN, STA_IF
         from ubinascii import hexlify
-        self.wifi = WLAN(STA_IF)
+        if self.wifi is None:
+            self.wifi = WLAN(STA_IF)
+        if not self.wifi.active():
+            self.wifi.active(True)
         if self.device_id is None:
             self.device_id = hexlify(self.wifi.config('mac'), ':').decode().upper()
         ssid = None
         if self.wifi.isconnected():
-            ssid = self.wifi.config('essid')
+            ssid = bytes(self.wifi.config('essid'), 'utf8')
         if self.verbose:
             if ssid:
                 print('Connected to: {}'.format(ssid))
@@ -74,9 +81,15 @@ class Application:
                 print('Assign lowest dBm ssid: {}'.format(ssid))
         elif not ap_list and ssid is None:
             if self.verbose:
-                print("No ssid's available to assign")
+                print("No ssid available to assign")
+        elif not ap_list and ssid:
+            if self.verbose:
+                print("Connection unchanged")
+            return
         else:
-            self.wifi.connect(ssid, password=config['wifi']['password'])
+            if self.verbose:
+                print("Reconnecting ... ")
+        self.wifi.connect(ssid, config['wifi']['password'])
 
     def connect_mqtt(self, device_id):
         self.mqtt.connect()
@@ -87,6 +100,6 @@ class Application:
     @staticmethod
     def mqtt_callback(topic, msg):
         from json import loads
-        Application._mqtt_msg = loads(msg)
+        Application.mqtt_msg = loads(msg)
         print(topic)
-        print(Application._mqtt_msg)
+        print(Application.mqtt_msg)
