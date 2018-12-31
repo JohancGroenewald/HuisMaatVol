@@ -1,5 +1,12 @@
 import sys
 
+print('--[OBJECTS]--------------------------------------------------')
+objects = dir()
+objects.sort()
+for datum in objects:
+    print(datum)
+
+print('--[MODULES]--------------------------------------------------')
 modules = [module for module in sys.modules]
 modules.sort()
 for module in modules:

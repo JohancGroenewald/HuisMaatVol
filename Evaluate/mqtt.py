@@ -105,8 +105,9 @@ class MQTTClient:
         return resp[2] & 1
 
     def disconnect(self):
-        self.sock.write(b"\xe0\0")
-        self.sock.close()
+        if self.sock:
+            self.sock.write(b"\xe0\0")
+            self.sock.close()
 
     def ping(self):
         self.sock.write(b"\xc0\0")

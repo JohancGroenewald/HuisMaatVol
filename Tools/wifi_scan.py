@@ -13,6 +13,15 @@ def wifi_scan():
         print(':: Activating Wifi')
         wifi.active(True)
 
+    if wifi.isconnected():
+        print(':: Wifi connected')
+        print(':: essid = {}'.format(wifi.config('essid')))
+        print(':: status = {}'.format(wifi.status()))
+        print(':: ifconfig = {}'.format(wifi.ifconfig()))
+    else:
+        print(':: No wifi connection')
+        wifi.active(True)
+
     ap_list = wifi.scan()                   # scan for access points
     ap_list = [
         (RSSI, hexlify(bssid, ':'), ssid, channel) for (ssid, bssid, channel, RSSI, authmode, hidden) in ap_list
