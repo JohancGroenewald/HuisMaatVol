@@ -9,6 +9,8 @@ if verbose:
 from classes import Application
 application = Application(verbose=verbose)
 application.run()
+if application.perform_reboot is True:
+    import reboot
 collect()
 if verbose:
     print(mem_free())

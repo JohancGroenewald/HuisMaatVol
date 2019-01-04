@@ -10,10 +10,20 @@ class Application:
     TIMEOUT_PIVOT = 0.0
     TIMEOUT_DECAY = 0.5
     TOP_SSID, SSID_INDEX = 0, 2
-    mqtt_msg = None
+    ACTION = 'action'
+    ACTION_REBOOT = 'reboot'
+    ACTION_ON = 'on'
+    ACTION_OFF = 'off'
+    ACTION_EXIT = 'exit'
+    STATUS = 'status'
+    STATUS_RELAY = 'relay'
+    STATUS_SELF = 'self'
+    incoming = None
 
     def __init__(self, verbose=0):
         self.verbose = verbose
+        self.exit_application = False
+        self.perform_reboot = False
         self.device_id = None
         self.wifi = None
         self.mqtt = None
@@ -22,32 +32,37 @@ class Application:
         # ---------------------------------------------
         # Do device setup here to optimize availability
         # ---------------------------------------------
+        # Relays
+        # LED's
 
         # ---------------------------------------------
         collect()
 
     def run(self, watch_dog=60):
         from time import sleep_ms
-        while watch_dog:
+        while self.exit_application is False and watch_dog:
             watch_dog -= 1
             if self.verbose:
-                self.write('#[{}]'.format(watch_dog), end='\r')
+                self.write('#[{}]  '.format(watch_dog), end='\r')
             # ##########################################################################################################
             if self.connecting_wifi() is False:
                 self.received_mqtt()
-            for t in range(50):
-                sleep_ms(10)
+            if self.exit_application == self.perform_reboot is False:
+                for t in range(50):
+                    sleep_ms(10)
             # ##########################################################################################################
             if self.connecting_wifi() is False:
                 self.received_mqtt()
-            for t in range(49):
-                sleep_ms(10)
+            if self.exit_application == self.perform_reboot is False:
+                for t in range(49):
+                    sleep_ms(10)
             # ##########################################################################################################
             collect()
         if self.verbose:
             self.write()
 
-    def write(self, *args, **kwargs):
+    @staticmethod
+    def write(*args, **kwargs):
         try:
             print(*args, **kwargs)
         except:
@@ -162,14 +177,39 @@ class Application:
             return False
         try:
             self.mqtt.check_msg()
+            if Application.incoming is not None:
+                self.perform_actions()
         except Exception as e:
             if self.verbose:
                 self.write('MQTT receive error: {}'.format(e))
         return True
 
+    def perform_actions(self):
+        if Application.ACTION in Application.incoming:
+            actions = Application.incoming[Application.ACTION]
+            if Application.ACTION_OFF in actions:
+                pass
+            if Application.ACTION_ON in actions:
+                pass
+            if Application.ACTION_REBOOT in actions:
+                self.perform_reboot = True
+                self.exit_application = True
+            if Application.ACTION_EXIT in actions:
+                self.exit_application = True
+        if Application.STATUS in Application.incoming:
+            statuses = Application.incoming[Application.STATUS]
+            if Application.STATUS_RELAY in statuses:
+                pass
+            if Application.STATUS_SELF in statuses:
+                pass
+        if self.exit_application is True:
+            # Perform system shutdown housekeeping
+            pass
+        Application.incoming = None
+
     @staticmethod
     def mqtt_callback(topic, msg):
         from json import loads
-        Application.mqtt_msg = loads(msg)
-        self.write(topic)
-        self.write(Application.mqtt_msg)
+        Application.incoming = loads(msg)
+        Application.write(topic)
+        Application.write(Application.incoming)
