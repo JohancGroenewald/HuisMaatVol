@@ -19,7 +19,7 @@ def cpython(check_sums):
         try:
             with open(os.path.join('evaluate', file), 'rb') as f:
                 h = crc16(f.read())
-                checksum_buffer[file] = h
+                checksum_buffer[file + '_evaluate'] = h
             print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
         except:
             print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
@@ -34,7 +34,7 @@ def cpython(check_sums):
         try:
             with open(os.path.join('tools', file), 'rb') as f:
                 h = crc16(f.read())
-                checksum_buffer[file] = h
+                checksum_buffer[file + '_tools'] = h
             print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
         except:
             print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
@@ -49,7 +49,7 @@ def cpython(check_sums):
         try:
             with open(file, 'rb') as f:
                 h = crc16(f.read())
-                checksum_buffer[file] = h
+                checksum_buffer[file + '_application'] = h
             print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
         except:
             print('{: <40}   ERROR  {: >4}'.format(file, s[6]))

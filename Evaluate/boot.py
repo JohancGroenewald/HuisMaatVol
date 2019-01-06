@@ -1,3 +1,3 @@
 # noinspection PyUnresolvedReferences
 from webrepl import start
-start()
+start()  # About 42ms

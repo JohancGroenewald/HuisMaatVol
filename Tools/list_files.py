@@ -28,6 +28,7 @@ if implementation.name == 'micropython':
             'boot.py',
             'main.py',
             'app.py',
+            'config.py',
             'classes.py',
             'mqtt.py'
         ]
@@ -40,7 +41,7 @@ if implementation.name == 'micropython':
             try:
                 with open(file, 'rb') as f:
                     h = crc16_stream(f)
-                re_h = checksum_buffer[file]
+                re_h = checksum_buffer[file + '_evaluate']
                 print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
                     file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
                 )
@@ -59,7 +60,8 @@ if implementation.name == 'micropython':
             'reboot.py',
             'unload.py',
             'update.py',
-            'wifi_scan.py'
+            'wifi_scan.py',
+            'wifi_restore.py'
         ]
         # noinspection PyArgumentList
         files = [f for f in os.listdir() if f in tools]
@@ -70,7 +72,7 @@ if implementation.name == 'micropython':
             try:
                 with open(file, 'rb') as f:
                     h = crc16_stream(f)
-                re_h = checksum_buffer[file]
+                re_h = checksum_buffer[file + '_tools']
                 print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
                     file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
                 )
@@ -104,7 +106,7 @@ if implementation.name == 'micropython':
             try:
                 with open(file, 'rb') as f:
                     h = crc16_stream(f)
-                re_h = checksum_buffer[file]
+                re_h = checksum_buffer[file + '_application']
                 end = '' if len(file) < 35 else '\n'
                 print('{: <35}'.format(file), end=end)
                 mask = '{: ' + ('>41' if len(file) > 35 else '>6') + '}  {: >6} {: >6} {}'
