@@ -1,14 +1,15 @@
 from gc import collect
+from micropython import const
 
 
 # noinspection PyUnresolvedReferences
 class Application:
-    WATCH_DOG_DECAY = 0.5
     RECONNECT_DELAY_MIN = 10.0
     RECONNECT_DELAY_MAX = 60.0
     RECONNECT_GROWTH = 1.0
     TIMEOUT_PIVOT = 0.0
     TIMEOUT_DECAY = 0.5
+    WATCH_DOG_DECAY = 0.5
     TOP_SSID, BSSID_INDEX, SSID_INDEX = 0, 1, 2
     SUPPORTED_VERSION = [2, 0]
     VERSION = 'version'
@@ -22,37 +23,40 @@ class Application:
     STATUS_SELF = 'self'
     incoming = None
     boot_time = None
+    verbose = 0
 
     def __init__(self, config, verbose=0):
         self.config = config
-        self.verbose = verbose
+        Application.verbose = verbose
         self.exit_application = False
         self.perform_reboot = False
         self.device_id = None
         self.wifi = None
         self.mqtt = None
         self.reconnect_delay = Application.RECONNECT_DELAY_MIN
-        self.reconnect_timeout = Application.TIMEOUT_PIVOT
-        if verbose:
-            from time import ticks_ms, ticks_diff
-            print('Boot time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
+        self.reconnect_timeout = Application.TIMEOUT_PIVOT + 2
+        # if verbose:
+        #     from time import ticks_ms, ticks_diff
+        #     print('Boot time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
 
     def initialize_hardware(self):
         pass
 
     def de_initialize_hardware(self):
-        leds = self.config.get('led', {})
-        status_led = leds.get(0, {})
         from machine import Pin
-        Pin(status_led['pin'], Pin.OUT).value(not status_led['active'])
-        pass
+        devices = self.config.get('led', {})
+        for device in devices.values():
+            Pin(device['pin'], Pin.OUT).value(not device['active'])
+        devices = self.config.get('relay', {})
+        for device in devices.values():
+            Pin(device['pin'], Pin.OUT).value(not device['active'])
 
-    def run(self, watch_dog=60):
+    def run(self, watch_dog=const(600)):
         watch_dog = float(watch_dog)
         from time import sleep_ms
         while self.exit_application is False and watch_dog:
             watch_dog -= Application.WATCH_DOG_DECAY
-            if self.verbose:
+            if Application.verbose:
                 self.write('#[{}]  '.format(int(watch_dog)), end='\r')
             # ##########################################################################################################
             if self.connecting_wifi() is False:
@@ -67,7 +71,7 @@ class Application:
         # ---------------------------------------------
         self.de_initialize_hardware()
         # ---------------------------------------------
-        if self.verbose:
+        if Application.verbose:
             self.write()
 
     @staticmethod
@@ -87,12 +91,12 @@ class Application:
             self.wifi.active(True)
         if self.device_id is None:
             self.device_id = hexlify(self.wifi.config('mac'), ':').decode().upper()
-            if self.verbose:
+            if Application.verbose:
                 self.write('device_id: {}'.format(self.device_id))
         ssid, bssid = None, None
         if self.wifi.isconnected():
             ssid = self.wifi.config('essid')
-        if self.verbose:
+        if Application.verbose:
             if ssid:
                 self.write('Connected to: {}'.format(ssid))
             else:
@@ -106,7 +110,7 @@ class Application:
             if search(ssid_mask, _ssid)
         ]
         ap_list.sort(key=lambda stats: stats[0]*-1)
-        if self.verbose:
+        if Application.verbose:
             for (_RSSI, _bssid, _ssid, _channel) in ap_list:
                 self.write(_RSSI, hexlify(_bssid, ':'), _ssid, _channel)
         preferred = self.config['wifi']['preferred']
@@ -118,28 +122,28 @@ class Application:
                 preferred = False
         if preferred:
                 ssid = preferred
-                if self.verbose:
+                if Application.verbose:
                     self.write('Assign preferred ssid: {}, bssid: {}'.format(ssid, hexlify(bssid, ':')))
         elif ap_list and ssid is None:
             ssid = ap_list[self.TOP_SSID][self.SSID_INDEX]
             bssid = ap_list[self.TOP_SSID][self.BSSID_INDEX]
-            if self.verbose:
+            if Application.verbose:
                 self.write('Assign ssid: {}'.format(ssid))
         elif ap_list and ssid != ap_list[self.TOP_SSID][self.SSID_INDEX]:
             ssid = ap_list[self.TOP_SSID][self.SSID_INDEX]
             bssid = ap_list[self.TOP_SSID][self.BSSID_INDEX]
-            if self.verbose:
+            if Application.verbose:
                 self.write('Assign lowest dBm ssid: {}'.format(ssid))
         elif not ap_list and ssid is None:
-            if self.verbose:
+            if Application.verbose:
                 self.write("No ssid available to assign")
             return
         elif not ap_list and ssid:
-            if self.verbose:
+            if Application.verbose:
                 self.write("Connection unchanged")
             return
         else:
-            if self.verbose:
+            if Application.verbose:
                 self.write("Force reconnect to dominant AP")
         self.wifi.connect(ssid, self.config['wifi']['password'], bssid=bssid)
 
@@ -156,7 +160,7 @@ class Application:
             if reconnected:
                 self.reconnect_delay = Application.RECONNECT_DELAY_MIN
                 self.reconnect_timeout = self.reconnect_delay
-                if self.verbose:
+                if Application.verbose:
                     self.write('Reconnected to Wifi')
             return False
         elif self.reconnect_timeout <= Application.TIMEOUT_PIVOT:
@@ -190,7 +194,7 @@ class Application:
         try:
             self.mqtt.publish(self.config['mqtt']['topic'], dumps(message))
         except Exception as e:
-            if self.verbose:
+            if Application.verbose:
                 self.write('MQTT publish error: {}'.format(e))
         return True
 
@@ -202,7 +206,7 @@ class Application:
             if Application.incoming is not None:
                 self.perform_actions()
         except Exception as e:
-            if self.verbose:
+            if Application.verbose:
                 self.write('MQTT receive error: {}'.format(e))
         return True
 
@@ -236,8 +240,9 @@ class Application:
         from json import loads
         try:
             Application.incoming = loads(msg)
-            Application.write(topic)
-            Application.write(Application.incoming)
+            if Application.verbose:
+                Application.write('topic: {}'.format(topic))
+                Application.write(Application.incoming)
         except Exception as e:
             if Application.verbose:
                 Application.write('MQTT message load error: {}'.format(e))
