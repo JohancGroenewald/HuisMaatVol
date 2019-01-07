@@ -1,8 +1,15 @@
 DEFAULTS = {
-    'led': {
-        0: {},
+    'led_defaults': {
+        0: True,
+        1: True,
+        2: True,
+        3: True,
+        4: True,
     },
-    'relay': {
-        0: {'pin': 12, 'active': 1},
+    'relay_defaults': {
+        0: True,
+        1: True,
+        2: True,
+        3: True,
     }
 }

@@ -1,3 +1,6 @@
+from micropython import opt_level
+opt_level(3)
+
 
 def main():
     # noinspection PyUnresolvedReferences
@@ -5,8 +8,7 @@ def main():
     # boot_time = ticks_ms()
     from config import CONFIG
     # verbose = 0
-    from micropython import opt_level
-    opt_level(0)
+
     import gc
     # if verbose:
     #     print('opt_level:', opt_level())
@@ -22,7 +24,7 @@ def main():
     # noinspection PyUnboundLocalVariable
     del module
     del modules
-    gc.collect()
+    # gc.collect()
     # if verbose:
     #     from time import ticks_diff
     #     print('2.' 'Boot time: {}'.format(ticks_diff(ticks_ms(), boot_time)))
@@ -32,7 +34,6 @@ def main():
     # if verbose:
     #     del ticks_diff
     gc.collect()
-    del gc
     from classes import Application
     # if verbose:
     #     from time import ticks_ms, ticks_diff

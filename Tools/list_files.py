@@ -53,8 +53,10 @@ if implementation.name == 'micropython':
             'cleanup.py',
             'cleanup_full.py',
             'crc16.py',
+            'delete_file.py',
             'device_id.py',
             'list_files.py',
+            'list_files_basic.py',
             'list_modules.py',
             'mem_info.py',
             'reboot.py',
@@ -83,6 +85,8 @@ if implementation.name == 'micropython':
         application = [
             'application.py',
             'boot.py',
+            'config_default_on.py',
+            'config_default_off.py',
             'config_local.py',
             'config_sonoff_4ch_v2.py',
             'config_sonoff_basic.py',
@@ -136,6 +140,7 @@ if implementation.name == 'micropython':
     from sys import modules
     if __name__ in modules:
         del modules[__name__]
+    del modules['crc16']
 
 else:
     # noinspection PyUnresolvedReferences

@@ -10,8 +10,8 @@ class Application:
     TIMEOUT_PIVOT = 0.0
     TIMEOUT_DECAY = 0.5
     WATCH_DOG_DECAY = 0.5
-    TOP_SSID, BSSID_INDEX, SSID_INDEX = 0, 1, 2
-    SUPPORTED_VERSION = [2, 0]
+    TOP_SSID, BSSID_INDEX, SSID_INDEX = const(0), const(1), const(2)
+    SUPPORTED_VERSION = [const(2), const(0)]
     VERSION = 'version'
     ACTION = 'action'
     ACTION_REBOOT = 'reboot'
@@ -25,7 +25,7 @@ class Application:
     boot_time = None
     verbose = 0
 
-    def __init__(self, config, verbose=0):
+    def __init__(self, config, verbose=const(0)):
         self.config = config
         Application.verbose = verbose
         self.exit_application = False
@@ -40,6 +40,7 @@ class Application:
         #     print('Boot time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
 
     def initialize_hardware(self):
+
         pass
 
     def de_initialize_hardware(self):
@@ -148,7 +149,7 @@ class Application:
         self.wifi.connect(ssid, self.config['wifi']['password'], bssid=bssid)
 
     def connecting_wifi(self):
-        if self.wifi is not None and self.wifi.isconnected() and self.wifi.status() == 5:
+        if self.wifi is not None and self.wifi.isconnected() and self.wifi.status() == const(5):
             reconnected = self.reconnect_timeout < self.reconnect_delay
             if reconnected or self.mqtt is None:
                 self.connect_mqtt()
@@ -175,7 +176,9 @@ class Application:
     def connect_mqtt(self):
         if self.mqtt is None:
             from mqtt import MQTTClient
-            self.mqtt = MQTTClient(client_id=self.device_id, server=self.config['mqtt']['ip'], port=self.config['mqtt']['port'])
+            self.mqtt = MQTTClient(
+                client_id=self.device_id, server=self.config['mqtt']['ip'], port=self.config['mqtt']['port']
+            )
             self.mqtt.set_callback(Application.mqtt_callback)
         self.mqtt.connect()
         self.mqtt.subscribe(self.device_id)
@@ -184,9 +187,9 @@ class Application:
         if self.mqtt is None or self.wifi is None or self.wifi.isconnected() is False:
             return False
         message.update({
-            'device_id': self.device_id,
-            'device_type': self.config['device']['type'],
-            'config_file': self.config['config']['file'],
+            'device''_id': self.device_id,
+            'device''_type': self.config['device']['type'],
+            'config''_file': self.config['config']['file'],
             'essid': self.wifi.config('essid'),
             'version': Application.SUPPORTED_VERSION
         })
@@ -195,7 +198,7 @@ class Application:
             self.mqtt.publish(self.config['mqtt']['topic'], dumps(message))
         except Exception as e:
             if Application.verbose:
-                self.write('MQTT publish error: {}'.format(e))
+                self.write('MQTT ''publish'' error: {}'.format(e))
         return True
 
     def received_mqtt(self):
@@ -207,28 +210,25 @@ class Application:
                 self.perform_actions()
         except Exception as e:
             if Application.verbose:
-                self.write('MQTT receive error: {}'.format(e))
+                self.write('MQTT ''receive'' error: {}'.format(e))
         return True
 
     def perform_actions(self):
-        version = None
-        if Application.VERSION in Application.incoming:
-            version = Application.incoming[Application.VERSION]
-            if version < Application.SUPPORTED_VERSION:
-                version = False
-        if version and Application.ACTION in Application.incoming:
-            actions = Application.incoming[Application.ACTION]
+        version = Application.incoming.get(Application.VERSION, None)
+        actions = Application.incoming.get(Application.ACTION, None)
+        statuses = Application.incoming.get(Application.STATUS, None)
+        if version is not None and version < Application.SUPPORTED_VERSION:
+            version = False
+        if version and actions is not None:
             if Application.ACTION_OFF in actions:
                 pass
             if Application.ACTION_ON in actions:
                 pass
-            if Application.ACTION_REBOOT in actions:
-                self.perform_reboot = True
+            self.perform_reboot = actions.get(Application.ACTION_REBOOT, False)
+            self.exit_application = actions.get(Application.ACTION_EXIT, False)
+            if self.perform_reboot:
                 self.exit_application = True
-            if Application.ACTION_EXIT in actions:
-                self.exit_application = True
-        if version and Application.STATUS in Application.incoming:
-            statuses = Application.incoming[Application.STATUS]
+        if version and statuses is not None:
             if Application.STATUS_RELAY in statuses:
                 pass
             if Application.STATUS_SELF in statuses:
@@ -245,4 +245,4 @@ class Application:
                 Application.write(Application.incoming)
         except Exception as e:
             if Application.verbose:
-                Application.write('MQTT message load error: {}'.format(e))
+                Application.write('MQTT ''message load'' error: {}'.format(e))
