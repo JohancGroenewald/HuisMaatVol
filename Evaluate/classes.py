@@ -35,9 +35,10 @@ class Application:
         self.mqtt = None
         self.reconnect_delay = Application.RECONNECT_DELAY_MIN
         self.reconnect_timeout = Application.TIMEOUT_PIVOT + 2
-        # if verbose:
-        #     from time import ticks_ms, ticks_diff
-        #     print('Boot time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
+        self.initialize_hardware()
+        if verbose:
+            from time import ticks_ms, ticks_diff
+            print('#''Boot time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
 
     def initialize_hardware(self):
 
@@ -58,7 +59,7 @@ class Application:
         while self.exit_application is False and watch_dog:
             watch_dog -= Application.WATCH_DOG_DECAY
             if Application.verbose:
-                self.write('#[{}]  '.format(int(watch_dog)), end='\r')
+                self.write('#''[{}]  '.format(int(watch_dog)), end='\r')
             # ##########################################################################################################
             if self.connecting_wifi() is False:
                 self.received_mqtt()

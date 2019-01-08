@@ -1,8 +1,11 @@
-
 def setup():
     from os import listdir
     # noinspection PyArgumentList
-    configurations = [f[:-3] for f in listdir() if f.startswith('config_')]
+    configurations = [
+        f[:f.rfind('.')]
+        for f in listdir()
+        if f.startswith('config_')
+    ]
     config_sonoff = None
     config_default = None
     for configuration in configurations:
@@ -30,19 +33,9 @@ def setup():
         default = device['active'] if default else not device['active']
         Pin(device['pin'], Pin.OUT).value(default)
     # -------------------------------------------------------------
-    # del configurations
-    # del config_sonoff
-    # del config_default
-    # del imported_module
-    # del defaults
-
     from config_local import config as local_config
     config.update(local_config)
-    # del local_config
     return config
 
 
 CONFIG = setup()
-# del setup
-# import gc
-# gc.collect()

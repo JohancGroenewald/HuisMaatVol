@@ -5,6 +5,8 @@ print('--[IMPLEMENTATION]-----------------------------------------')
 print('{}'.format(implementation.name))
 
 if implementation.name == 'micropython':
+    from machine import idle
+    from utime import sleep_ms
     from micropython import opt_level
     re_opt_level = opt_level()
     opt_level(3)
@@ -37,6 +39,7 @@ if implementation.name == 'micropython':
         files.sort()
         listed.extend(files)
         for file in files:
+            sleep_ms(1)
             s = uos.stat(file)
             try:
                 with open(file, 'rb') as f:
@@ -70,6 +73,7 @@ if implementation.name == 'micropython':
         files.sort()
         listed.extend(files)
         for file in files:
+            sleep_ms(1)
             s = uos.stat(file)
             try:
                 with open(file, 'rb') as f:
@@ -106,6 +110,7 @@ if implementation.name == 'micropython':
         files.sort()
         listed.extend(files)
         for file in files:
+            sleep_ms(1)
             s = uos.stat(file)
             try:
                 with open(file, 'rb') as f:
@@ -125,6 +130,7 @@ if implementation.name == 'micropython':
         files = [f for f in os.listdir() if f not in listed]
         files.sort()
         for file in files:
+            sleep_ms(1)
             s = uos.stat(file)
             try:
                 with open(file, 'rb') as f:
@@ -132,7 +138,6 @@ if implementation.name == 'micropython':
                 print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
             except:
                 print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
-
         opt_level(re_opt_level)
 
     micropython()
