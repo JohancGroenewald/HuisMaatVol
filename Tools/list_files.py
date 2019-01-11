@@ -1,11 +1,20 @@
 from sys import implementation
 
 check_sums = 'checksum.json'
-print('--[IMPLEMENTATION]-----------------------------------------')
-print('{}'.format(implementation.name))
-
 if implementation.name == 'micropython':
-    from machine import idle
+    def print_header(heading):
+        m = '--[{}]'.format(heading.upper())
+        print('{}{}'.format(m, '-'*(70-len(m))))
+
+    def print_line(name, size, crc):
+        m = '{: <50}{}{: >6}{}{: >6}'.format(name, ' '*4, size, ' '*4, crc)
+        print(m)
+
+    def print_line_error(name):
+        m = '{: <50}{}ERROR'.format(name, ' '*15)
+        print(m)
+    print_header('IMPLEMENTATION')
+    print('{}'.format(implementation.name))
     from utime import sleep_ms
     from micropython import opt_level
     re_opt_level = opt_level()
@@ -14,6 +23,10 @@ if implementation.name == 'micropython':
     from gc import collect
     from json import loads
     # noinspection PyUnresolvedReferences
+    from ucollections import namedtuple
+    file_stat = namedtuple('file_stat', (
+        'st_mode', 'st_ino', 'st_dev', 'st_nlink', 'st_uid', 'st_gid', 'st_size', 'st_atime', 'st_mtime', 'st_ctime'
+    ))
     from crc16 import crc16_stream
     collect()
     import os
@@ -25,119 +38,33 @@ if implementation.name == 'micropython':
             checksum_buffer = loads(f.read())
         import uos
         listed = []
-        print('--[EVALUATE]-----------------------------------------------')
-        tools = [
-            'boot.py',
-            'main.py',
-            'app.py',
-            'config.py',
-            'classes.py',
-            'mqtt.py'
-        ]
-        # noinspection PyArgumentList
-        files = [f for f in os.listdir() if f in tools]
-        files.sort()
-        listed.extend(files)
-        for file in files:
-            sleep_ms(1)
-            s = uos.stat(file)
-            try:
-                with open(file, 'rb') as f:
-                    h = crc16_stream(f)
-                re_h = checksum_buffer[file + '_evaluate']
-                print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
-                    file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
-                )
-            except:
-                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
-        print('--[TOOLS]--------------------------------------------------')
-        tools = [
-            'cat.py',
-            'cleanup.py',
-            'cleanup_full.py',
-            'crc16.py',
-            'delete_file.py',
-            'device_id.py',
-            'list_files.py',
-            'list_files_basic.py',
-            'list_modules.py',
-            'mem_info.py',
-            'reboot.py',
-            'unload.py',
-            'update.py',
-            'wifi_scan.py',
-            'wifi_restore.py'
-        ]
-        # noinspection PyArgumentList
-        files = [f for f in os.listdir() if f in tools]
-        files.sort()
-        listed.extend(files)
-        for file in files:
-            sleep_ms(1)
-            s = uos.stat(file)
-            try:
-                with open(file, 'rb') as f:
-                    h = crc16_stream(f)
-                re_h = checksum_buffer[file + '_tools']
-                print('{: <35}  {: >4}  {: >6} {: >6} {}'.format(
-                    file, s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
-                )
-            except:
-                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
 
-        print('--[APPLICATION]--------------------------------------------')
-        application = [
-            'application.py',
-            'boot.py',
-            'config_default_on.py',
-            'config_default_off.py',
-            'config_local.py',
-            'config_sonoff_4ch_v2.py',
-            'config_sonoff_basic.py',
-            'config_sonoff_dual_r2.py',
-            'config_sonoff_touch_t1_r2_us_v1_2gang.py',
-            'config_sonoff_touch_t1_r2_us_v1_3gang.py',
-            'delayed.py',
-            'functions.py',
-            'responsive.py',
-            'shutdown.py',
-            'umqtt_simple.py',
-            'variables.py',
-            'wrapper.py'
-        ]
         # noinspection PyArgumentList
-        files = [f for f in os.listdir() if f in application]
-        files.sort()
-        listed.extend(files)
-        for file in files:
-            sleep_ms(1)
-            s = uos.stat(file)
-            try:
-                with open(file, 'rb') as f:
-                    h = crc16_stream(f)
-                re_h = checksum_buffer[file + '_application']
-                end = '' if len(file) < 35 else '\n'
-                print('{: <35}'.format(file), end=end)
-                mask = '{: ' + ('>41' if len(file) > 35 else '>6') + '}  {: >6} {: >6} {}'
-                print(mask.format(
-                    s[6], h, re_h, 'OK' if h == re_h else 'FAILED'),
-                )
-            except:
-                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
+        files = [f for f in os.listdir()]
 
-        print('--[UN GROUPED]---------------------------------------------')
-        # noinspection PyArgumentList
-        files = [f for f in os.listdir() if f not in listed]
-        files.sort()
-        for file in files:
+        header = None
+        for (source, file, checksum) in checksum_buffer:
             sleep_ms(1)
-            s = uos.stat(file)
-            try:
+            if header != source:
+                print_header(source.upper())
+                header = source
+            if file in files:
+                s = file_stat(*uos.stat(file))
                 with open(file, 'rb') as f:
                     h = crc16_stream(f)
-                print('{: <35}  {: >6}  {: >4}'.format(file, h, s[6]))
-            except:
-                print('{: <35}   ERROR  {: >4}'.format(file, s[6]))
+                print_line(file, checksum if checksum == h else 'FAILED', s.st_size)
+                listed.append(file)
+
+        print_header('LOCAL ONLY')
+        for file in files:
+            sleep_ms(1)
+            if file not in listed:
+                s = file_stat(*uos.stat(file))
+                with open(file, 'rb') as f:
+                    h = crc16_stream(f)
+                print_line(file, h, s.st_size)
+
+        print_header('*DONE*')
         opt_level(re_opt_level)
 
     micropython()
@@ -150,4 +77,4 @@ if implementation.name == 'micropython':
 else:
     # noinspection PyUnresolvedReferences
     from list_files_local import cpython
-    cpython(check_sums)
+    cpython(check_sums, implementation.name)

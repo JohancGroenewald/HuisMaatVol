@@ -1,0 +1,3 @@
+SETUP = {
+    'name': 'Workbench Lights'
+}

@@ -18,6 +18,7 @@ class Application:
     ACTION_ON = 'on'
     ACTION_OFF = 'off'
     ACTION_EXIT = 'exit'
+    ACTION_CONNECT = 'connect'
     STATUS = 'status'
     STATUS_RELAY = 'relay'
     STATUS_SELF = 'self'
@@ -35,46 +36,68 @@ class Application:
         self.mqtt = None
         self.reconnect_delay = Application.RECONNECT_DELAY_MIN
         self.reconnect_timeout = Application.TIMEOUT_PIVOT + 2
-        self.initialize_hardware()
+        # --------------------------------------------------------------------------------------------------------------
+        self.connect_to = False
+        # --------------------------------------------------------------------------------------------------------------
+        self.leds = self.config.get('leds', [])
+        self.leds_active = self.config.get('leds''_''active', [])
+        self.relays = self.config.get('relays', [])
+        self.relays_active = self.config.get('relays''_''active', [])
+        self.buttons = self.config.get('buttons', [])
+        self.buttons_active = self.config.get('buttons''_''active', [])
+        self.buttons_state = self.config.get('buttons''_''state', [])
+        # --------------------------------------------------------------------------------------------------------------
         if verbose:
             from time import ticks_ms, ticks_diff
-            print('#''Boot time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
-
-    def initialize_hardware(self):
-
-        pass
+            print('#''.Load time: {}'.format(ticks_diff(ticks_ms(), Application.boot_time)))
 
     def de_initialize_hardware(self):
-        from machine import Pin
-        devices = self.config.get('led', {})
-        for device in devices.values():
-            Pin(device['pin'], Pin.OUT).value(not device['active'])
-        devices = self.config.get('relay', {})
-        for device in devices.values():
-            Pin(device['pin'], Pin.OUT).value(not device['active'])
+        for i, hal in enumerate(self.relays):
+            hal.value(not self.relays_active[i])
+        for i, hal in enumerate(self.leds):
+            hal.value(not self.leds_active[i])
 
     def run(self, watch_dog=const(600)):
         watch_dog = float(watch_dog)
         from time import sleep_ms
-        while self.exit_application is False and watch_dog:
-            watch_dog -= Application.WATCH_DOG_DECAY
+        while self.exit_application is False and (watch_dog == -1 or watch_dog):
+            if watch_dog:
+                watch_dog -= Application.WATCH_DOG_DECAY
             if Application.verbose:
-                self.write('#''[{}]  '.format(int(watch_dog)), end='\r')
+                self.write('#''[{}]{}'.format(int(watch_dog), ' '*5), end='\r')
             # ##########################################################################################################
             if self.connecting_wifi() is False:
                 self.received_mqtt()
             if self.exit_application == self.perform_reboot is False:
+                if self.leds[0]:
+                    self.leds[0].value(not self.leds[0].value())
                 for t in range(49):
                     sleep_ms(10)
+                    for i, button in enumerate(self.buttons):
+                        debounce_down = 2
+                        debounce_up = debounce_down + 2
+                        if self.buttons_state[i] <= debounce_down and button.value() == self.buttons_active[i]:
+                            self.buttons_state[i] += 1
+                            if self.buttons_state[i] > debounce_down:
+                                print('#''[{}] button down: {}'.format(int(watch_dog), i))
+                        elif debounce_down < self.buttons_state[i] <= debounce_up and button.value() != self.buttons_active[i]:
+                            self.buttons_state[i] += 1
+                            if self.buttons_state[i] > debounce_up:
+                                self.buttons_state[i] = 0
+                                print('#''[{}] button up  : {}'.format(int(watch_dog), i))
+
             # ##########################################################################################################
             collect()
         # ---------------------------------------------
         # Perform system shutdown housekeeping
         # ---------------------------------------------
         self.de_initialize_hardware()
+        self.publish_relay_state()
+        self.publish_mqtt({'device''_status': 'offline'})
+        self.disconnect_mqtt()
         # ---------------------------------------------
         if Application.verbose:
-            self.write()
+            self.write('#''.Application Run Exit')
 
     @staticmethod
     def write(*args, **kwargs):
@@ -96,6 +119,7 @@ class Application:
             if Application.verbose:
                 self.write('device_id: {}'.format(self.device_id))
         ssid, bssid = None, None
+        pre_shared_key = self.config['wifi']['pre_shared_key']
         if self.wifi.isconnected():
             ssid = self.wifi.config('essid')
         if Application.verbose:
@@ -115,7 +139,11 @@ class Application:
         if Application.verbose:
             for (_RSSI, _bssid, _ssid, _channel) in ap_list:
                 self.write(_RSSI, hexlify(_bssid, ':'), _ssid, _channel)
-        preferred = self.config['wifi']['preferred']
+        if self.connect_to:
+            preferred, pre_shared_key = self.connect_to
+            self.connect_to = False
+        else:
+            preferred = self.config['wifi']['preferred']
         if preferred:
             for (_, _bssid, _ssid, _) in ap_list:
                 if _ssid == preferred:
@@ -147,18 +175,15 @@ class Application:
         else:
             if Application.verbose:
                 self.write("Force reconnect to dominant AP")
-        self.wifi.connect(ssid, self.config['wifi']['password'], bssid=bssid)
+        self.wifi.connect(ssid, pre_shared_key, bssid=bssid)
 
     def connecting_wifi(self):
-        if self.wifi is not None and self.wifi.isconnected() and self.wifi.status() == const(5):
+        if self.wifi is not None and self.wifi.isconnected() and self.connect_to is False:
             reconnected = self.reconnect_timeout < self.reconnect_delay
             if reconnected or self.mqtt is None:
                 self.connect_mqtt()
-                self.publish_mqtt({
-                    'reconnect' 'ed': reconnected,
-                    'reconnect_timeout': self.reconnect_timeout,
-                    'reconnect_delay': self.reconnect_delay
-                })
+                self.publish_mqtt({'device''_status': 'online'})
+                self.publish_relay_state()
             if reconnected:
                 self.reconnect_delay = Application.RECONNECT_DELAY_MIN
                 self.reconnect_timeout = self.reconnect_delay
@@ -184,18 +209,24 @@ class Application:
         self.mqtt.connect()
         self.mqtt.subscribe(self.device_id)
 
+    def disconnect_mqtt(self):
+        if self.mqtt is None:
+            return
+        self.mqtt.disconnect()
+
     def publish_mqtt(self, message: dict):
         if self.mqtt is None or self.wifi is None or self.wifi.isconnected() is False:
             return False
-        message.update({
-            'device''_id': self.device_id,
-            'device''_type': self.config['device']['type'],
-            'config''_file': self.config['config']['file'],
-            'essid': self.wifi.config('essid'),
-            'version': Application.SUPPORTED_VERSION
-        })
         from json import dumps
         try:
+            message.update({
+                'device''_id': self.device_id,
+                'device''_type': self.config['device']['type'],
+                'device''_name': self.config['device']['name'],
+                'config''_file': self.config['config']['file'],
+                'essid': self.wifi.config('essid'),
+                'version': Application.SUPPORTED_VERSION
+            })
             self.mqtt.publish(self.config['mqtt']['topic'], dumps(message))
         except Exception as e:
             if Application.verbose:
@@ -215,26 +246,50 @@ class Application:
         return True
 
     def perform_actions(self):
+        relay_status = False
+        self_status = False
         version = Application.incoming.get(Application.VERSION, None)
         actions = Application.incoming.get(Application.ACTION, None)
         statuses = Application.incoming.get(Application.STATUS, None)
         if version is not None and version < Application.SUPPORTED_VERSION:
             version = False
         if version and actions is not None:
-            if Application.ACTION_OFF in actions:
-                pass
-            if Application.ACTION_ON in actions:
-                pass
+            action = actions.get(Application.ACTION_ON, [])
+            if action:
+                relay_status = True
+                for relay in action:
+                    self.relays[relay].value(self.relays_active[relay])
+            action = actions.get(Application.ACTION_OFF, [])
+            if action:
+                relay_status = True
+                for relay in action:
+                    self.relays[relay].value(not self.relays_active[relay])
+            self.connect_to = actions.get(Application.ACTION_CONNECT, False)
             self.perform_reboot = actions.get(Application.ACTION_REBOOT, False)
             self.exit_application = actions.get(Application.ACTION_EXIT, False)
             if self.perform_reboot:
                 self.exit_application = True
         if version and statuses is not None:
             if Application.STATUS_RELAY in statuses:
-                pass
+                relay_status = True
             if Application.STATUS_SELF in statuses:
-                pass
+                self_status = True
+        if relay_status:
+            self.publish_relay_state()
+        if self_status:
+            self.publish_self_state()
         Application.incoming = None
+
+    def publish_relay_state(self):
+        self.publish_mqtt({
+            'relays': {
+                'on': [i for i, hal in enumerate(self.relays) if hal.value() == self.relays_active[i]],
+                'off': [i for i, hal in enumerate(self.relays) if hal.value() != self.relays_active[i]]
+            }
+        })
+
+    def publish_self_state(self):
+        pass
 
     @staticmethod
     def mqtt_callback(topic, msg):

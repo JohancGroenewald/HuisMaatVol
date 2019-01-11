@@ -4,64 +4,53 @@ from json import dumps
 from crc16 import crc16
 
 
-def cpython(check_sums):
+def cpython(check_sums, implementation):
+
+    def print_header(heading):
+        m = '--[{}]'.format(heading.upper())
+        print('{}{}'.format(m, '-'*(70-len(m))))
+
+    def print_line(name, size, crc):
+        m = '{: <50}{}{: >6}{}{: >5}'.format(name, ' '*5, size, ' '*4, crc)
+        print(m)
+
+    def print_line_error(name):
+        m = '{: <50}{}ERROR'.format(name, ' '*15)
+        print(m)
+
+    print_header('IMPLEMENTATION')
+    print(implementation)
+
     ignore = [
-        '.git', '.gitignore', '.idea', '__pycache__', 'Tools', 'Argief', 'Evaluate'
+        '.git', '.gitignore', '.idea', '__pycache__',
+        'Argief', 'Config', 'Devices', 'Evaluate', 'Tools', 'precompile.py'
     ]
-    checksum_buffer = {}
-    print('--[EVALUATE]-----------------------------------------------')
-    files = [f for f in os.listdir('evaluate') if f not in [check_sums]]
-    files.sort()
-    for file in files:
-        if file in ignore:
-            continue
-        s = os.stat(os.path.join('evaluate', file))
-        try:
-            with open(os.path.join('evaluate', file), 'rb') as f:
-                h = crc16(f.read())
-                checksum_buffer[file + '_evaluate'] = h
-            print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
-        except:
-            print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
-
-    print('--[TOOLS]--------------------------------------------------')
-    files = [f for f in os.listdir('tools') if f not in [check_sums]]
-    files.sort()
-    for file in files:
-        if file in ignore:
-            continue
-        s = os.stat(os.path.join('tools', file))
-        try:
-            with open(os.path.join('tools', file), 'rb') as f:
-                h = crc16(f.read())
-                checksum_buffer[file + '_tools'] = h
-            print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
-        except:
-            print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
-
-    print('--[APPLICATION]--------------------------------------------')
-    files = [f for f in os.listdir() if f not in [check_sums]]
-    files.sort()
-    for file in files:
-        if file in ignore:
-            continue
-        s = os.stat(file)
-        try:
-            with open(file, 'rb') as f:
-                h = crc16(f.read())
-                checksum_buffer[file + '_application'] = h
-            print('{: <40}  {: >6}  {: >4}'.format(file, h, s[6]))
-        except:
-            print('{: <40}   ERROR  {: >4}'.format(file, s[6]))
-
-    print('--[CHECKSUM]-----------------------------------------------')
+    sources = ['Config', 'Devices', 'Evaluate', 'Tools']
+    checksum_buffer = []
+    for source in sources:
+        print_header(source)
+        files = [f for f in os.listdir(source) if f not in [check_sums]]
+        files.sort()
+        for file in files:
+            if file in ignore:
+                continue
+            s = os.stat(os.path.join(source, file))
+            try:
+                with open(os.path.join(source, file), 'rb') as f:
+                    h = crc16(f.read())
+                    checksum_buffer.append((source, file, h))
+                print_line(file, h, s[6])
+            except:
+                print_line_error(file)
+    print_header('CHECKSUM')
     url = check_sums
     with open(url, 'w') as f:
         f.write(dumps(checksum_buffer))
     try:
+        s = os.stat(url)
         with open(check_sums, 'rb') as f:
             h = crc16(f.read())
-            checksum_buffer[check_sums] = h
-        print('{: <40}  {: >6}  {: >4}'.format(check_sums, h, s[6]))
+            checksum_buffer.append(('un-sourced', check_sums, h))
+        print_line(check_sums, h, s[6])
     except:
-        print('{: <40}   ERROR  {: >4}'.format(check_sums, s[6]))
+        print_line_error(check_sums)
