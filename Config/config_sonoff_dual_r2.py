@@ -2,28 +2,28 @@
 #  Timer 5 controls the servo drive.
 #  Timer 6 is used to signaling ADC / DAC read/write.
 
+import references as R
+
 CONFIG = {
-    'device': {
-        'type': 'ESP8285'
+    R.KEY_DEVICE: {
+        R.KEY_TYPE: 'ESP8285'
     },
-    'button': {
-        0: {'hal': None, 'pin': 10, 'active': 0, 'debounce': 100, 'states': 2, 'relay': [0, 1]},
+    R.KEY_BUTTON: {
+        0: {R.KEY_HAL: None, R.KEY_PIN: 10, R.KEY_ACTIVE_STATE: 0, 'states': 2, R.KEY_RELAY: [0, 1]},
     },
-    'led': {
-        0: {'hal': None, 'pin': 13, 'active': 0, 'relay': [0, 1]},
+    R.KEY_LED: {
+        0: {R.KEY_HAL: None, R.KEY_PIN: 13, R.KEY_ACTIVE_STATE: 0, R.KEY_RELAY: [0, 1]},
     },
-    'led_irq': {
-        'timer': 1, 'period': 5000, 'visual_cycle': [25, 50, 25]
+    R.KEY_RELAY: {
+        0: {R.KEY_HAL: None, R.KEY_PIN: 12, R.KEY_ACTIVE_STATE: 1},
+        1: {R.KEY_HAL: None, R.KEY_PIN: 5, R.KEY_ACTIVE_STATE: 1},
     },
-    'relay': {
-        0: {'hal': None, 'pin': 12, 'active': 1},
-        1: {'hal': None, 'pin': 5, 'active': 1},
-    },
-    'leds': [],
-    'leds_active': [],
-    'relays': [],
-    'relays_active': [],
-    'buttons': [],
-    'buttons_active': [],
-    'buttons_state': []
+    R.KEY_LEDS: [],
+    R.KEY_LEDS_ACTIVE: [],
+    R.KEY_RELAYS: [],
+    R.KEY_RELAYS_ACTIVE: [],
+    R.KEY_BUTTONS: [],
+    R.KEY_BUTTONS_ACTIVE: [],
+    R.KEY_BUTTONS_STATE: [],
+    R.KEY_BUTTONS_RELAYS: [],
 }

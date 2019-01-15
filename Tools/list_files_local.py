@@ -21,11 +21,13 @@ def cpython(check_sums, implementation):
     print_header('IMPLEMENTATION')
     print(implementation)
 
+    sources = ['Config', 'Devices', 'HuisMaat', 'Tools']
     ignore = [
-        '.git', '.gitignore', '.idea', '__pycache__',
-        'Argief', 'Config', 'Devices', 'Evaluate', 'Tools', 'precompile.py'
+        '.git', '.gitignore', '.idea', '__pycache__', 'precompile.py'
+        'Argief'
     ]
-    sources = ['Config', 'Devices', 'Evaluate', 'Tools']
+    ignore.extend(sources)
+
     checksum_buffer = []
     for source in sources:
         print_header(source)

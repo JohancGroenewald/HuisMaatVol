@@ -16,13 +16,15 @@ SOURCES = {
         'config_setup_bed_side_light.py',
         'config_setup_development.py',
         'config_setup_under_table.py',
-        'config_setup_workbench.py'
+        'config_setup_workbench.py',
+        'config_setup_computer_room.py'
     ],
-    'evaluate': [
+    'huismaat': [
         'app.py',
         'config.py',
         'classes.py',
-        'mqtt.py'
+        'mqtt.py',
+        'references.py'
     ],
     'tools': []
 }

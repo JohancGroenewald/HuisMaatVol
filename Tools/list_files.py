@@ -64,7 +64,7 @@ if implementation.name == 'micropython':
                     h = crc16_stream(f)
                 print_line(file, h, s.st_size)
 
-        print_header('*DONE*')
+        print_header('*')
         opt_level(re_opt_level)
 
     micropython()
