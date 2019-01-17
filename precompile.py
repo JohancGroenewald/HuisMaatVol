@@ -13,6 +13,7 @@ SOURCES = {
         'config_sonoff_touch_t1_r2_us_v1_3gang.py'
     ],
     'devices': [
+        'config_setup_bed_room_light.py',
         'config_setup_bed_side_light.py',
         'config_setup_development.py',
         'config_setup_under_table.py',

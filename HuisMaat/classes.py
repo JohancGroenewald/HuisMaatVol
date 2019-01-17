@@ -10,6 +10,7 @@ class Application:
     RECONNECT_DELAY_MAX = 60.0
     RECONNECT_GROWTH = 1.0
     RECONNECT_REFRESH = RECONNECT_DELAY_MAX
+    WIFI_STATUS_DELAY = 10.0
     TIMEOUT_PIVOT = 0.0
     TIMEOUT_DECAY = 0.5
     WATCH_DOG_DECAY = 0.5
@@ -57,6 +58,7 @@ class Application:
         self.reconnect_delay = Application.RECONNECT_DELAY_MIN
         self.reconnect_timeout = Application.TIMEOUT_PIVOT
         self.reconnect_refresh = Application.RECONNECT_REFRESH
+        self.wifi_status_delay = Application.WIFI_STATUS_DELAY
         self.reconnect_index = 0
         # --------------------------------------------------------------------------------------------------------------
         self.connect_to = False
@@ -220,9 +222,12 @@ class Application:
                     return
             else:
                 self.write('Not Connected, Status: {}'.format(self.wifi.status()))
-                if self.wifi.status() > 0:
-                    if self.reconnect_refresh <= Application.TIMEOUT_PIVOT:
+                if self.wifi.status() > 1:
+                    if self.wifi_status_delay <= Application.TIMEOUT_PIVOT:
+                        self.wifi_status_delay = Application.WIFI_STATUS_DELAY
                         self.wifi.active(False)
+                    else:
+                        self.wifi_status_delay -= Application.TIMEOUT_DECAY
                     return
         ssid_mask = '^{}$'.format(self.config[R.KEY_WIFI][R.KEY_MASK])
         ap_list = self.wifi.scan()
@@ -279,12 +284,6 @@ class Application:
             if Application.verbose:
                 self.write("Force reconnect to dominant AP")
         self.wifi.connect(ssid, pre_shared_key, bssid=bssid)
-        # noinspection PyUnresolvedReferences
-        # from time import sleep_ms
-        # watch_dog = 5000
-        # while not self.wifi.isconnected() and watch_dog:
-        #     sleep_ms(1)
-        #     watch_dog -= 1
 
     def connecting_wifi(self):
         if self.wifi is not None and self.wifi.isconnected() and self.wifi.status() == 5 and self.connect_to is False:
@@ -296,14 +295,15 @@ class Application:
             if reconnected:
                 self.reconnect_delay = Application.RECONNECT_DELAY_MIN
                 self.reconnect_timeout = self.reconnect_delay
+                self.reconnect_index = Application.TOP_SSID
                 if Application.verbose:
                     self.write('Reconnected to Wifi')
             return False
         elif self.reconnect_timeout <= Application.TIMEOUT_PIVOT:
             self.connect_wifi()
+            self.reconnect_index += 1
             if self.reconnect_delay < Application.RECONNECT_DELAY_MAX:
                 self.reconnect_delay += Application.RECONNECT_GROWTH
-                self.reconnect_index += 1
             self.reconnect_timeout = self.reconnect_delay
         else:
             self.reconnect_timeout -= Application.TIMEOUT_DECAY
