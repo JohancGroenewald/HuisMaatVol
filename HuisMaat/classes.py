@@ -1,22 +1,46 @@
 # noinspection PyUnresolvedReferences
 from time import ticks_ms, ticks_diff
+# noinspection PyUnresolvedReferences
+from time import sleep_ms, sleep
+import machine
 from gc import collect
 from micropython import const
+import network
+# noinspection PyUnresolvedReferences
+from ubinascii import hexlify
+# noinspection PyUnresolvedReferences
+from ure import search
 import references as R
 
 
 class Application:
+    RESET_CAUSES = [
+        machine.PWRON_RESET, machine.HARD_RESET, machine.WDT_RESET, machine.DEEPSLEEP_RESET, machine.SOFT_RESET
+    ]
+    RESET_CAUSES_STRINGS = [
+        'PWRON_''RESET', 'HARD_''RESET', 'WDT_''RESET', 'DEEPSLEEP_''RESET', 'SOFT_''RESET'
+    ]
+    RECONNECT_DELAY_STARTUP = 3.0
     RECONNECT_DELAY_MIN = 15.0
     RECONNECT_DELAY_MAX = 60.0
     RECONNECT_GROWTH = 1.0
     RECONNECT_REFRESH = RECONNECT_DELAY_MAX
     WIFI_STATUS_DELAY = 10.0
+    WIFI_STATUSES = [
+        network.STAT_IDLE,
+        network.STAT_CONNECTING,
+        network.STAT_WRONG_PASSWORD,
+        network.STAT_NO_AP_FOUND,
+        network.STAT_CONNECT_FAIL,
+        network.STAT_GOT_IP
+    ]
     TIMEOUT_PIVOT = 0.0
     TIMEOUT_DECAY = 0.5
     WATCH_DOG_DECAY = 0.5
     WATCH_DOG_DEFAULT = const(600)
     WATCH_DOG_DISABLED = const(-1)
-    TOP_SSID, BSSID_INDEX, SSID_INDEX = const(0), const(1), const(2)
+    TOP_SSID, BSSID_INDEX, SSID_INDEX, RSSI_INDEX = const(0), const(1), const(2), const(0)
+    RSSI_PIVOT = const(-80)
     SUPPORTED_VERSION = [const(2), const(0)]
     VERSION = 'version'
     ACTION = 'action'
@@ -55,11 +79,13 @@ class Application:
         self.device_id = None
         self.wifi = None
         self.mqtt = None
-        self.reconnect_delay = Application.RECONNECT_DELAY_MIN
+        self.reconnect_delay = Application.RECONNECT_DELAY_STARTUP
         self.reconnect_timeout = Application.TIMEOUT_PIVOT
         self.reconnect_refresh = Application.RECONNECT_REFRESH
         self.wifi_status_delay = Application.WIFI_STATUS_DELAY
         self.reconnect_index = 0
+        self.re_connected = False
+        self.round_robbin = []
         # --------------------------------------------------------------------------------------------------------------
         self.connect_to = False
         # --------------------------------------------------------------------------------------------------------------
@@ -91,8 +117,6 @@ class Application:
     def run(self, watch_dog=WATCH_DOG_DEFAULT):
         Application.boot_time = ticks_ms()
         watch_dog = float(watch_dog)
-        # noinspection PyUnresolvedReferences
-        from time import sleep_ms
         button_active, button_down, button_up, button_pressed = None, False, False, False
         while self.exit_application is False and (watch_dog == Application.WATCH_DOG_DISABLED or watch_dog):
             if watch_dog > 0:
@@ -197,102 +221,18 @@ class Application:
         except:
             pass
 
-    # noinspection SpellCheckingInspection
-    def connect_wifi(self):
-        from network import WLAN, STA_IF
-        # noinspection PyUnresolvedReferences
-        from ubinascii import hexlify
-        if self.wifi is None:
-            self.wifi = WLAN(STA_IF)
-        if not self.wifi.active():
-            self.wifi.active(True)
-            return
-        if self.device_id is None:
-            self.device_id = hexlify(self.wifi.config(R.KEY_MAC), ':').decode().upper()
-            if Application.verbose:
-                self.write('device_id: {}'.format(self.device_id))
-        ssid, bssid, selected_ssid = None, None, self.reconnect_index
-        pre_shared_key = self.config[R.KEY_WIFI][R.KEY_PRE_SHARED_KEY]
-        if self.wifi.isconnected():
-            ssid = self.wifi.config(R.KEY_ESSID)
-        if Application.verbose:
-            if ssid:
-                self.write('Connected to: {}, status: {}'.format(ssid, self.wifi.status()))
-                if self.reconnect_refresh > Application.TIMEOUT_PIVOT:
-                    return
-            else:
-                self.write('Not Connected, Status: {}'.format(self.wifi.status()))
-                if self.wifi.status() > 1:
-                    if self.wifi_status_delay <= Application.TIMEOUT_PIVOT:
-                        self.wifi_status_delay = Application.WIFI_STATUS_DELAY
-                        self.wifi.active(False)
-                    else:
-                        self.wifi_status_delay -= Application.TIMEOUT_DECAY
-                    return
-        ssid_mask = '^{}$'.format(self.config[R.KEY_WIFI][R.KEY_MASK])
-        ap_list = self.wifi.scan()
-        # noinspection PyUnresolvedReferences
-        from ure import search
-        ap_list = [
-            (_RSSI, _bssid, _ssid.decode('utf-8'), _channel)
-            for (_ssid, _bssid, _channel, _RSSI, _, _) in ap_list
-            if search(ssid_mask, _ssid)
-        ]
-        RSSI_INDEX = const(0)
-        ap_list.sort(key=lambda stats: stats[RSSI_INDEX]*-1)
-        if ap_list and selected_ssid >= len(ap_list):
-            self.reconnect_index = Application.TOP_SSID
-            self.wifi.active(False)
-            return
-        if Application.verbose:
-            for (_RSSI, _bssid, _ssid, _channel) in ap_list:
-                self.write(_RSSI, hexlify(_bssid, ':'), _ssid, _channel)
-        if self.connect_to:
-            preferred, pre_shared_key = self.connect_to
-            self.connect_to = False
-        else:
-            preferred = self.config[R.KEY_DEVICE][R.KEY_PREFERRED_WIFI_AP]
-        if preferred:
-            for (_, _bssid, _ssid, _) in ap_list:
-                if _ssid == preferred:
-                    bssid = _bssid
-            if bssid is None:
-                preferred = False
-        if preferred:
-            ssid = preferred
-            if Application.verbose:
-                self.write('Assign preferred ssid: {}, bssid: {}'.format(ssid, hexlify(bssid, ':')))
-        elif ap_list and ssid is None:
-            ssid = ap_list[selected_ssid][Application.SSID_INDEX]
-            bssid = ap_list[selected_ssid][Application.BSSID_INDEX]
-            if Application.verbose:
-                self.write('Assign ssid: {}'.format(ssid))
-        elif ap_list and ssid != ap_list[Application.TOP_SSID][Application.SSID_INDEX]:
-            ssid = ap_list[Application.TOP_SSID][Application.SSID_INDEX]
-            bssid = ap_list[Application.TOP_SSID][Application.BSSID_INDEX]
-            if Application.verbose:
-                self.write('Assign lowest dBm ssid: {}'.format(ssid))
-        elif not ap_list and ssid is None:
-            if Application.verbose:
-                self.write("No ssid available to assign")
-            return
-        elif not ap_list and ssid:
-            if Application.verbose:
-                self.write("Connection unchanged")
-            return
-        else:
-            if Application.verbose:
-                self.write("Force reconnect to dominant AP")
-        self.wifi.connect(ssid, pre_shared_key, bssid=bssid)
-
     def connecting_wifi(self):
-        if self.wifi is not None and self.wifi.isconnected() and self.wifi.status() == 5 and self.connect_to is False:
-            reconnected = self.reconnect_timeout < self.reconnect_delay
+        connected = self.wifi is not None and self.wifi.isconnected() and self.wifi.status() == network.STAT_GOT_IP
+        if connected and self.connect_to is False:
+            reconnected = self.re_connected is False
             if reconnected or self.mqtt is None:
                 self.connect_mqtt()
                 self.publish_mqtt({R.KEY_DEVICE_STATUS: R.VALUE_STATUS_ONLINE})
                 self.publish_relay_state()
+                if Application.verbose:
+                    self.write('Reconnected to MQTT')
             if reconnected:
+                self.re_connected = True
                 self.reconnect_delay = Application.RECONNECT_DELAY_MIN
                 self.reconnect_timeout = self.reconnect_delay
                 self.reconnect_index = Application.TOP_SSID
@@ -300,14 +240,187 @@ class Application:
                     self.write('Reconnected to Wifi')
             return False
         elif self.reconnect_timeout <= Application.TIMEOUT_PIVOT:
-            self.connect_wifi()
+            self.connect_wifi_v2()
             self.reconnect_index += 1
             if self.reconnect_delay < Application.RECONNECT_DELAY_MAX:
                 self.reconnect_delay += Application.RECONNECT_GROWTH
             self.reconnect_timeout = self.reconnect_delay
+            if self.re_connected is True:
+                self.re_connected = False
         else:
             self.reconnect_timeout -= Application.TIMEOUT_DECAY
+            if self.re_connected is True:
+                self.re_connected = False
         return True
+
+    def connect_wifi_v2(self):
+        if self.wifi is None:
+            self.wifi = network.WLAN(network.STA_IF)
+            self.device_id = hexlify(self.wifi.config(R.KEY_MAC), ':').decode().upper()
+            if Application.verbose:
+                self.write('device_id: {}'.format(self.device_id))
+            if machine.reset_cause() in Application.RESET_CAUSES:
+                self.write('reset_cause: {}'.format(Application.RESET_CAUSES_STRINGS[machine.reset_cause()]))
+        if self.wifi.status() not in Application.WIFI_STATUSES and self.wifi.active() is False:
+            self.wifi.active(True)
+            if Application.verbose:
+                self.write('Activated Wifi module...')
+            return
+        if self.wifi.status() == network.STAT_IDLE or self.connect_to:
+            ssid, bssid = None, None
+            pre_shared_key = self.config[R.KEY_WIFI][R.KEY_PRE_SHARED_KEY]
+            ssid_mask = '^{}$'.format(self.config[R.KEY_WIFI][R.KEY_MASK])
+            ap_list = self.wifi.scan()
+            ap_list = [
+                (_RSSI, _bssid, _ssid.decode('utf-8'), _channel)
+                for (_ssid, _bssid, _channel, _RSSI, _, _) in ap_list
+                if search(ssid_mask, _ssid) and _RSSI > Application.RSSI_PIVOT
+            ]
+            if len(ap_list) == 0:
+                if Application.verbose:
+                    self.write('No wifi access points in range')
+                return
+            ap_list.sort(key=lambda stats: stats[Application.RSSI_INDEX]*-1)
+            if self.connect_to:
+                preferred, pre_shared_key = self.connect_to
+                self.connect_to = False  # Do not set connect_to to False before hand off!
+                self.round_robbin = []
+            else:
+                preferred = self.config[R.KEY_DEVICE][R.KEY_PREFERRED_WIFI_AP]
+            if preferred:
+                for (_, _bssid, _ssid, _) in ap_list:
+                    if _ssid == preferred and _ssid not in self.round_robbin:
+                        ssid = _ssid
+                        bssid = _bssid
+                if ssid is None or bssid is None:
+                    preferred = False
+                else:
+                    if Application.verbose:
+                        self.write('Assign preferred ssid...')
+            if preferred is False:
+                ssid_index = Application.TOP_SSID
+                while True:
+                    ssid = ap_list[ssid_index][Application.SSID_INDEX]
+                    bssid = ap_list[ssid_index][Application.BSSID_INDEX]
+                    if ssid not in self.round_robbin:
+                        break
+                    ssid_index += 1
+                    if ssid_index >= len(ap_list):
+                        self.round_robbin = []
+                        self.wifi.disconnect()
+                        self.wifi.active(False)
+                        return
+            if Application.verbose:
+                for (_RSSI, _bssid, _ssid, _channel) in ap_list:
+                    self.write(_RSSI, hexlify(_bssid, ':'), _ssid, _channel)
+                self.write('Connecting to ssid: {} with bssid: {}'.format(ssid, hexlify(bssid, ':')))
+            self.wifi.connect(ssid, pre_shared_key, bssid=bssid)
+            connected = False
+            watch_dog = 10
+            while not connected and watch_dog:
+                connected = self.wifi.isconnected() and self.wifi.status() == network.STAT_GOT_IP
+                sleep(1)
+                watch_dog -= 1
+                if Application.verbose:
+                    print('watch_dog: {}, connected:{}'.format(watch_dog, connected))
+            if connected:
+                self.round_robbin = []
+            elif watch_dog == 0 and connected is False:
+                if ssid not in self.round_robbin:
+                    self.round_robbin.append(ssid)
+                self.wifi.disconnect()
+                self.wifi.active(False)
+                if Application.verbose:
+                    print('Deactivating the wifi network...')
+        pass
+
+    # noinspection SpellCheckingInspection
+    # def connect_wifi_v1(self):
+    #     from network import WLAN, STA_IF
+    #     # noinspection PyUnresolvedReferences
+    #     from ubinascii import hexlify
+    #     if self.wifi is None:
+    #         self.wifi = WLAN(STA_IF)
+    #     if not self.wifi.active():
+    #         self.wifi.active(True)
+    #         return
+    #     if self.device_id is None:
+    #         self.device_id = hexlify(self.wifi.config(R.KEY_MAC), ':').decode().upper()
+    #         if Application.verbose:
+    #             self.write('device_id: {}'.format(self.device_id))
+    #     ssid, bssid, selected_ssid = None, None, self.reconnect_index
+    #     pre_shared_key = self.config[R.KEY_WIFI][R.KEY_PRE_SHARED_KEY]
+    #     if self.wifi.isconnected():
+    #         ssid = self.wifi.config(R.KEY_ESSID)
+    #     if Application.verbose:
+    #         if ssid:
+    #             self.write('Connected to: {}, status: {}'.format(ssid, self.wifi.status()))
+    #             if self.reconnect_refresh > Application.TIMEOUT_PIVOT:
+    #                 return
+    #         else:
+    #             self.write('Not Connected, Status: {}'.format(self.wifi.status()))
+    #             if self.wifi.status() > 1:
+    #                 if self.wifi_status_delay <= Application.TIMEOUT_PIVOT:
+    #                     self.wifi_status_delay = Application.WIFI_STATUS_DELAY
+    #                     self.wifi.active(False)
+    #                 else:
+    #                     self.wifi_status_delay -= Application.TIMEOUT_DECAY
+    #                 return
+    #     ssid_mask = '^{}$'.format(self.config[R.KEY_WIFI][R.KEY_MASK])
+    #     ap_list = self.wifi.scan()
+    #     # noinspection PyUnresolvedReferences
+    #     from ure import search
+    #     ap_list = [
+    #         (_RSSI, _bssid, _ssid.decode('utf-8'), _channel)
+    #         for (_ssid, _bssid, _channel, _RSSI, _, _) in ap_list
+    #         if search(ssid_mask, _ssid)
+    #     ]
+    #     RSSI_INDEX = const(0)
+    #     ap_list.sort(key=lambda stats: stats[RSSI_INDEX]*-1)
+    #     if ap_list and selected_ssid >= len(ap_list):
+    #         self.reconnect_index = Application.TOP_SSID
+    #         self.wifi.active(False)
+    #         return
+    #     if Application.verbose:
+    #         for (_RSSI, _bssid, _ssid, _channel) in ap_list:
+    #             self.write(_RSSI, hexlify(_bssid, ':'), _ssid, _channel)
+    #     if self.connect_to:
+    #         preferred, pre_shared_key = self.connect_to
+    #         self.connect_to = False
+    #     else:
+    #         preferred = self.config[R.KEY_DEVICE][R.KEY_PREFERRED_WIFI_AP]
+    #     if preferred:
+    #         for (_, _bssid, _ssid, _) in ap_list:
+    #             if _ssid == preferred:
+    #                 bssid = _bssid
+    #         if bssid is None:
+    #             preferred = False
+    #     if preferred:
+    #         ssid = preferred
+    #         if Application.verbose:
+    #             self.write('Assign preferred ssid: {}, bssid: {}'.format(ssid, hexlify(bssid, ':')))
+    #     elif ap_list and ssid is None:
+    #         ssid = ap_list[selected_ssid][Application.SSID_INDEX]
+    #         bssid = ap_list[selected_ssid][Application.BSSID_INDEX]
+    #         if Application.verbose:
+    #             self.write('Assign ssid: {}'.format(ssid))
+    #     elif ap_list and ssid != ap_list[Application.TOP_SSID][Application.SSID_INDEX]:
+    #         ssid = ap_list[Application.TOP_SSID][Application.SSID_INDEX]
+    #         bssid = ap_list[Application.TOP_SSID][Application.BSSID_INDEX]
+    #         if Application.verbose:
+    #             self.write('Assign lowest dBm ssid: {}'.format(ssid))
+    #     elif not ap_list and ssid is None:
+    #         if Application.verbose:
+    #             self.write("No ssid available to assign")
+    #         return
+    #     elif not ap_list and ssid:
+    #         if Application.verbose:
+    #             self.write("Connection unchanged")
+    #         return
+    #     else:
+    #         if Application.verbose:
+    #             self.write("Force reconnect to dominant AP")
+    #     self.wifi.connect(ssid, pre_shared_key, bssid=bssid)
 
     def connect_mqtt(self):
         if self.mqtt is None:
@@ -353,6 +466,8 @@ class Application:
             if Application.incoming is not None:
                 self.perform_actions()
         except Exception as e:
+            self.wifi.disconnect()
+            self.mqtt = None
             if Application.verbose:
                 self.write('MQTT ''receive'' error: {}'.format(e))
         return True
@@ -378,9 +493,10 @@ class Application:
                     self.relays[relay].value(not self.relays_active[relay])
             self.connect_to = actions.get(Application.ACTION_CONNECT, False)
             self.perform_reboot = actions.get(Application.ACTION_REBOOT, False)
-            self.exit_application = actions.get(Application.ACTION_EXIT, False)
             if self.perform_reboot:
                 self.exit_application = True
+            else:
+                self.exit_application = actions.get(Application.ACTION_EXIT, False)
         if version and statuses is not None:
             if Application.STATUS_RELAY in statuses:
                 relay_status = True

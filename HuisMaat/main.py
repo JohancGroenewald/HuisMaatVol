@@ -8,3 +8,4 @@ for module in modules:
 del modules
 del run_app
 __import__('gc').collect()
+import wifi_restore

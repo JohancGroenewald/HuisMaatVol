@@ -42,7 +42,9 @@ try:
     del KEY_WATCH_DOG
     del CONFIG
 except Exception as e:
-    print(e)
+    from sys import print_exception
+    # noinspection PyUnresolvedReferences
+    print_exception(e)
 import gc
 from sys import modules
 for module in modules:

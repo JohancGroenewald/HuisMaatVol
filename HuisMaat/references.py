@@ -8,7 +8,7 @@ CONFIG_DICTIONARY = 'CONFIG'
 DEFAULTS_DICTIONARY = 'DEFAULTS'
 SETUP_DICTIONARY = 'SETUP'
 LOCAL_DICTIONARY = 'LOCAL'
-KEY_LED_IRQ = 'led_irq'
+
 KEY_ACTIVE_STATE = 'active'
 KEY_LED = 'led'
 KEY_LED_DEFAULTS = 'led''_''defaults'
@@ -28,6 +28,9 @@ KEY_BUTTONS_STATE = 'buttons''_''state'
 KEY_BUTTONS_RELAYS = 'buttons''_''relays'
 KEY_DEVICE = 'device'
 KEY_NAME = 'name'
+
+KEY_LED_IRQ = 'led_irq'
+
 KEY_TYPE = 'type'
 KEY_DEVICE_ID = 'device''_''id'
 KEY_DEVICE_TYPE = 'device''_''type'

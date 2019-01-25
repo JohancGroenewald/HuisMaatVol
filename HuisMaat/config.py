@@ -1,6 +1,40 @@
 import os
 import references as R
 
+
+# class R:
+#     CONFIG_BASE = 'config''_'
+#     CONFIG_SONOFF = 'config''_''sonoff'
+#     CONFIG_DEFAULT = 'config''_''default'
+#     CONFIG_SETUP = 'config''_''setup'
+#     CONFIG_LOCAL = 'config''_''local'
+#     UNASSIGNED_DEVICE = 'Unassigned Device'
+#     CONFIG_DICTIONARY = 'CONFIG'
+#     DEFAULTS_DICTIONARY = 'DEFAULTS'
+#     SETUP_DICTIONARY = 'SETUP'
+#     LOCAL_DICTIONARY = 'LOCAL'
+#
+#     KEY_ACTIVE_STATE = 'active'
+#     KEY_LED = 'led'
+#     KEY_LED_DEFAULTS = 'led''_''defaults'
+#     KEY_RELAY = 'relay'
+#     KEY_RELAY_DEFAULTS = 'relay''_''defaults'
+#     KEY_PIN = 'pin'
+#     KEY_CONFIG = 'config'
+#     KEY_FILE = 'file'
+#     KEY_LEDS = 'leds'
+#     KEY_LEDS_ACTIVE = 'leds''_''active'
+#     KEY_RELAYS = 'relays'
+#     KEY_RELAYS_ACTIVE = 'relays''_''active'
+#     KEY_BUTTON = 'button'
+#     KEY_BUTTONS = 'buttons'
+#     KEY_BUTTONS_ACTIVE = 'buttons''_''active'
+#     KEY_BUTTONS_STATE = 'buttons''_''state'
+#     KEY_BUTTONS_RELAYS = 'buttons''_''relays'
+#     KEY_DEVICE = 'device'
+#     KEY_NAME = 'name'
+
+
 # noinspection PyArgumentList
 configurations = [
     f[:f.rfind('.')]
@@ -69,3 +103,5 @@ if config_local:
     imported_module = __import__(config_local)
     imported_setup = getattr(imported_module, R.LOCAL_DICTIONARY)
     CONFIG.update(imported_setup)
+
+# del R
