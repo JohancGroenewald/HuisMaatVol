@@ -16,7 +16,7 @@ if wifi.isconnected():
 else:
     print(':: No wifi connection')
 
-wifi.connect('__x3__pointer__', '_Groenewald1')
+wifi.connect('__r1__pointer__', '_Groenewald1')
 
 from time import sleep
 watch_dog = 60

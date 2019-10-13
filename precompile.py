@@ -27,7 +27,10 @@ SOURCES = {
         'mqtt.py',
         'references.py'
     ],
-    'tools': []
+    'tools': [],
+    'cli': [
+        'cli.py'
+    ],
 }
 
 for (source, files) in SOURCES.items():
