@@ -24,16 +24,19 @@ MQTT_TOPIC = 'v1/devices/me/telemetry'
 # declare relay callbacks
 def handler_for_relay1(event):
     relay1(not relay1())
+    telemetry['GANG1'] = relay1()
     micropython.schedule(publish_telemetry, None)
+
 
 def handler_for_relay2(event):
     relay2(not relay2())
+    telemetry['GANG2'] = relay2()
     micropython.schedule(publish_telemetry, None)
 
-def publish_telemetry():
+
+def publish_telemetry(args=None):
     try:
-        telemetry = {'GANG1': relay1(), 'GANG2': relay2()}
-        persistent = mqtt.connect()
+        mqtt.connect()
         mqtt.publish(
             MQTT_TOPIC,
             json.dumps(telemetry)
@@ -58,6 +61,8 @@ gang2 = machine.Pin(BUTTON_2_PIN, machine.Pin.IN)
 relay2 = machine.Pin(RELAY_2_PIN, machine.Pin.OUT)
 relay2(not RELAY_ACTIVE_STATE)
 gang2.irq(handler=handler_for_relay2, trigger=(machine.Pin.IRQ_RISING))
+
+telemetry = {'GANG1': relay1(), 'GANG2': relay2()}
 
 # setup mqtt client
 mqtt = simple.MQTTClient(
