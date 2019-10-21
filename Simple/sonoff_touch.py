@@ -6,6 +6,8 @@ import json
 import time
 from umqtt import simple
 
+VERBOSE = 1
+
 REBOOT_MS_WAIT = 3000
 GANG1 = 0
 GANG2 = 1
@@ -59,29 +61,36 @@ def relay2_interrupt(event):
 
 
 def gang_1_long_press(args=None):
+    if VERBOSE:
+        print('irq_measure[GANG1]: ' + str(irq_measure[GANG1]))
+        print('irq_measure[GANG2]: ' + str(irq_measure[GANG2]))
     machine.disable_irq()
-    micropython.schedule(reboot, None)
+    reboot()
 
 
 def gang_1_short_press(args=None):
     relay1(not relay1())
     telemetry['GANG1'] = relay1()
-    micropython.schedule(publish_telemetry, None)
-    irq_state[GANG1] = 0
     led1(not LED_ACTIVE_STATE)
+    publish_telemetry()
+    if VERBOSE:
+        print('irq_measure[GANG1]: ' + str(irq_measure[GANG1]))
+    irq_state[GANG1] = 0
 
 
 def gang_2_long_press(args=None):
-    irq_state[GANG2] = 0
     led1(not LED_ACTIVE_STATE)
+    irq_state[GANG2] = 0
 
 
 def gang_2_short_press(args=None):
     relay2(not relay2())
     telemetry['GANG2'] = relay2()
-    micropython.schedule(publish_telemetry, None)
-    irq_state[GANG2] = 0
     led1(not LED_ACTIVE_STATE)
+    publish_telemetry()
+    if VERBOSE:
+        print('irq_measure[GANG2]: ' + str(irq_measure[GANG2]))
+    irq_state[GANG2] = 0
 
 
 def publish_telemetry(args=None):
