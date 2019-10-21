@@ -15,8 +15,11 @@ BUTTON_2_PIN = 9
 RELAY_1_PIN = 12
 RELAY_2_PIN = 5
 
+LED_1_PIN = 13
+
 BUTTONS_ACTIVE_STATE = 0
 RELAY_ACTIVE_STATE = 1
+LED_ACTIVE_STATE = 0
 
 # MQTT_CLIENT_ID = '0374baf0-f36c-11e9-9c39-cf2c1965569a'
 MQTT_CLIENT_ID = ubinascii.hexlify(machine.unique_id())
@@ -31,6 +34,7 @@ def relay1_interrupt(event):
     if irq_state[GANG1] == 0:
         irq_state[GANG1] = 1
         irq_measure[GANG1] = time.ticks_ms()
+        led1(LED_ACTIVE_STATE)
     elif irq_state[GANG1] == 1:
         irq_state[GANG1] = 2
         irq_measure[GANG1] = time.ticks_diff(time.ticks_ms(), irq_measure[GANG1])
@@ -44,6 +48,7 @@ def relay2_interrupt(event):
     if irq_state[GANG2] == 0:
         irq_state[GANG2] = 1
         irq_measure[GANG2] = time.ticks_ms()
+        led1(LED_ACTIVE_STATE)
     elif irq_state[GANG2] == 1:
         irq_state[GANG2] = 2
         irq_measure[GANG2] = time.ticks_diff(time.ticks_ms(), irq_measure[GANG2])
@@ -62,16 +67,21 @@ def gang_1_short_press(args=None):
     relay1(not relay1())
     telemetry['GANG1'] = relay1()
     micropython.schedule(publish_telemetry, None)
+    irq_state[GANG1] = 0
+    led1(not LED_ACTIVE_STATE)
 
 
 def gang_2_long_press(args=None):
-    pass
+    irq_state[GANG2] = 0
+    led1(not LED_ACTIVE_STATE)
 
 
 def gang_2_short_press(args=None):
     relay2(not relay2())
     telemetry['GANG2'] = relay2()
     micropython.schedule(publish_telemetry, None)
+    irq_state[GANG2] = 0
+    led1(not LED_ACTIVE_STATE)
 
 
 def publish_telemetry(args=None):
@@ -90,11 +100,17 @@ def publish_telemetry(args=None):
 
 
 def reboot(args=None):
-    time.sleep_ms(2000)
+    for _ in range(2000//100):
+        led1(not led1())
+        time.sleep_ms(100)
     machine.reset()
 
 
-# setup gang interrupts
+# setup led
+led1 = machine.Pin(LED_1_PIN, machine.Pin.OUT)
+led1(LED_ACTIVE_STATE)
+
+# setup gang pins
 # Gang 1
 gang1 = machine.Pin(BUTTON_1_PIN, machine.Pin.IN)
 relay1 = machine.Pin(RELAY_1_PIN, machine.Pin.OUT)
@@ -109,6 +125,7 @@ telemetry = {'GANG1': relay1(), 'GANG2': relay2()}
 irq_state = [0, 0]
 irq_measure = [0, 0]
 
+# setup gang interrupts
 gang1.irq(handler=relay1_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
 gang2.irq(handler=relay2_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
 
@@ -123,3 +140,4 @@ mqtt = simple.MQTTClient(
 )
 
 publish_telemetry()
+led1(not LED_ACTIVE_STATE)
