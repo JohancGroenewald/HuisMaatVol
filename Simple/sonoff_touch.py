@@ -3,7 +3,12 @@ import micropython
 micropython.alloc_emergency_exception_buf(100)
 import ubinascii
 import json
+import time
 from umqtt import simple
+
+REBOOT_MS_WAIT = 3000
+GANG1 = 0
+GANG2 = 1
 
 BUTTON_1_PIN = 0
 BUTTON_2_PIN = 9
@@ -22,13 +27,48 @@ MQTT_TOPIC = 'v1/devices/me/telemetry'
 
 
 # declare relay callbacks
-def handler_for_relay1(event):
+def relay1_interrupt(event):
+    if irq_state[GANG1] == 0:
+        irq_state[GANG1] = 1
+        irq_measure[GANG1] = time.ticks_ms()
+    elif irq_state[GANG1] == 1:
+        irq_state[GANG1] = 2
+        irq_measure[GANG1] = time.ticks_diff(time.ticks_ms(), irq_measure[GANG1])
+        if irq_measure[GANG1] > REBOOT_MS_WAIT:
+            micropython.schedule(gang_1_long_press, None)
+        else:
+            micropython.schedule(gang_1_short_press, None)
+
+
+def relay2_interrupt(event):
+    if irq_state[GANG2] == 0:
+        irq_state[GANG2] = 1
+        irq_measure[GANG2] = time.ticks_ms()
+    elif irq_state[GANG2] == 1:
+        irq_state[GANG2] = 2
+        irq_measure[GANG2] = time.ticks_diff(time.ticks_ms(), irq_measure[GANG2])
+        if irq_measure[GANG2] > REBOOT_MS_WAIT:
+            micropython.schedule(gang_2_long_press, None)
+        else:
+            micropython.schedule(gang_2_short_press, None)
+
+
+def gang_1_long_press(args=None):
+    machine.disable_irq()
+    micropython.schedule(reboot, None)
+
+
+def gang_1_short_press(args=None):
     relay1(not relay1())
     telemetry['GANG1'] = relay1()
     micropython.schedule(publish_telemetry, None)
 
 
-def handler_for_relay2(event):
+def gang_2_long_press(args=None):
+    pass
+
+
+def gang_2_short_press(args=None):
     relay2(not relay2())
     telemetry['GANG2'] = relay2()
     micropython.schedule(publish_telemetry, None)
@@ -49,20 +89,28 @@ def publish_telemetry(args=None):
         pass
 
 
+def reboot(args=None):
+    time.sleep_ms(2000)
+    machine.reset()
+
+
 # setup gang interrupts
 # Gang 1
 gang1 = machine.Pin(BUTTON_1_PIN, machine.Pin.IN)
 relay1 = machine.Pin(RELAY_1_PIN, machine.Pin.OUT)
 relay1(not RELAY_ACTIVE_STATE)
-gang1.irq(handler=handler_for_relay1, trigger=(machine.Pin.IRQ_RISING))
 
 # Gang 2
 gang2 = machine.Pin(BUTTON_2_PIN, machine.Pin.IN)
 relay2 = machine.Pin(RELAY_2_PIN, machine.Pin.OUT)
 relay2(not RELAY_ACTIVE_STATE)
-gang2.irq(handler=handler_for_relay2, trigger=(machine.Pin.IRQ_RISING))
 
 telemetry = {'GANG1': relay1(), 'GANG2': relay2()}
+irq_state = [0, 0]
+irq_measure = [0, 0]
+
+gang1.irq(handler=relay1_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
+gang2.irq(handler=relay2_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
 
 # setup mqtt client
 mqtt = simple.MQTTClient(
