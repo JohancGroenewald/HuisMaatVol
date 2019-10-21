@@ -71,10 +71,10 @@ def gang_1_long_press(args=None):
 def gang_1_short_press(args=None):
     relay1(not relay1())
     telemetry['GANG1'] = relay1()
-    led1(not LED_ACTIVE_STATE)
     publish_telemetry()
     if VERBOSE:
         print('irq_measure[GANG1]: ' + str(irq_measure[GANG1]))
+    led1(not LED_ACTIVE_STATE)
     irq_state[GANG1] = 0
 
 
@@ -86,10 +86,10 @@ def gang_2_long_press(args=None):
 def gang_2_short_press(args=None):
     relay2(not relay2())
     telemetry['GANG2'] = relay2()
-    led1(not LED_ACTIVE_STATE)
     publish_telemetry()
     if VERBOSE:
         print('irq_measure[GANG2]: ' + str(irq_measure[GANG2]))
+    led1(not LED_ACTIVE_STATE)
     irq_state[GANG2] = 0
 
 
