@@ -1,12 +1,15 @@
 import machine
-import micropython
-micropython.alloc_emergency_exception_buf(100)
 import ubinascii
 import json
 import time
+import network
+import micropython
 from umqtt import simple
 
-VERBOSE = 1
+micropython.alloc_emergency_exception_buf(100)
+wifi = network.WLAN(network.STA_IF)
+
+VERBOSE = 0
 
 REBOOT_MS_WAIT = 3000
 GANG1 = 0
@@ -94,6 +97,8 @@ def gang_2_short_press(args=None):
 
 
 def publish_telemetry(args=None):
+    if not wifi.active() or not wifi.isconnected():
+        return
     try:
         mqtt.connect()
         mqtt.publish(
@@ -117,7 +122,7 @@ def reboot(args=None):
 
 # setup led
 led1 = machine.Pin(LED_1_PIN, machine.Pin.OUT)
-led1(LED_ACTIVE_STATE)
+led1(not LED_ACTIVE_STATE)
 
 # setup gang pins
 # Gang 1
@@ -134,9 +139,12 @@ telemetry = {'GANG1': relay1(), 'GANG2': relay2()}
 irq_state = [0, 0]
 irq_measure = [0, 0]
 
-# setup gang interrupts
-gang1.irq(handler=relay1_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
-gang2.irq(handler=relay2_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
+for _ in range(16):
+    led1(not led1())
+    time.sleep_ms(500)
+    if wifi.active() and wifi.isconnected():
+        break
+led1(LED_ACTIVE_STATE)
 
 # setup mqtt client
 mqtt = simple.MQTTClient(
@@ -150,3 +158,7 @@ mqtt = simple.MQTTClient(
 
 publish_telemetry()
 led1(not LED_ACTIVE_STATE)
+
+# setup gang interrupts
+gang1.irq(handler=relay1_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
+gang2.irq(handler=relay2_interrupt, trigger=(machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING))
