@@ -1,0 +1,10 @@
+import machine
+
+RELAY_1_PIN = 12
+
+BUTTONS_ACTIVE_STATE = 0
+RELAY_ACTIVE_STATE = 1
+LED_ACTIVE_STATE = 0
+
+relay1 = machine.Pin(RELAY_1_PIN, machine.Pin.OUT)
+relay1(RELAY_ACTIVE_STATE)

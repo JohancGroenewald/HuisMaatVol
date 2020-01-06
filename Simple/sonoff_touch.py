@@ -82,8 +82,11 @@ def gang_1_short_press(args=None):
 
 
 def gang_2_long_press(args=None):
-    led1(not LED_ACTIVE_STATE)
-    irq_state[GANG2] = 0
+    if VERBOSE:
+        print('irq_measure[GANG1]: ' + str(irq_measure[GANG1]))
+        print('irq_measure[GANG2]: ' + str(irq_measure[GANG2]))
+    machine.disable_irq()
+    reboot()
 
 
 def gang_2_short_press(args=None):
