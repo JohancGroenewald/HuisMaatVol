@@ -8,8 +8,10 @@ from umqtt import simple
 
 micropython.alloc_emergency_exception_buf(100)
 wifi = network.WLAN(network.STA_IF)
+mqtt = None
 
 VERBOSE = 0
+MQTT_TELEMETRY = False
 
 REBOOT_MS_WAIT = 3000
 GANG1 = 0
@@ -33,7 +35,6 @@ MQTT_ACCESS_TOKEN = 'M0669bB7CT6Q5oP23TNq'
 MQTT_PASSWORD = ''
 MQTT_TOPIC = 'v1/devices/me/telemetry'
 
-
 # declare relay callbacks
 def relay1_interrupt(event):
     if irq_state[GANG1] == 0:
@@ -47,6 +48,9 @@ def relay1_interrupt(event):
             micropython.schedule(gang_1_long_press, None)
         else:
             micropython.schedule(gang_1_short_press, None)
+    else:
+        led1(not LED_ACTIVE_STATE)
+        irq_state[GANG1] = 0
 
 
 def relay2_interrupt(event):
@@ -61,6 +65,9 @@ def relay2_interrupt(event):
             micropython.schedule(gang_2_long_press, None)
         else:
             micropython.schedule(gang_2_short_press, None)
+    else:
+        led1(not LED_ACTIVE_STATE)
+        irq_state[GANG2] = 0
 
 
 def gang_1_long_press(args=None):
@@ -100,6 +107,8 @@ def gang_2_short_press(args=None):
 
 
 def publish_telemetry(args=None):
+    if mqtt is None:
+        return
     if not wifi.active() or not wifi.isconnected():
         return
     try:
@@ -149,15 +158,16 @@ for _ in range(16):
         break
 led1(LED_ACTIVE_STATE)
 
-# setup mqtt client
-mqtt = simple.MQTTClient(
-    client_id=MQTT_CLIENT_ID,
-    server=MQTT_SERVER,
-    port=0,
-    user=MQTT_ACCESS_TOKEN,
-    password=MQTT_PASSWORD,
-    keepalive=0
-)
+if MQTT_TELEMETRY:
+    # setup mqtt client
+    mqtt = simple.MQTTClient(
+        client_id=MQTT_CLIENT_ID,
+        server=MQTT_SERVER,
+        port=0,
+        user=MQTT_ACCESS_TOKEN,
+        password=MQTT_PASSWORD,
+        keepalive=0
+    )
 
 publish_telemetry()
 led1(not LED_ACTIVE_STATE)
